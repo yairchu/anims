@@ -1,0 +1,10 @@
+[project]
+name = "anims"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "marimo>=0.24.2",
+    "moops>=0.15.5",
+]
