@@ -7,4 +7,5 @@ requires-python = ">=3.14"
 dependencies = [
     "marimo>=0.24.2",
     "moops>=0.15.5",
+    "wigglystuff>=0.5.32",
 ]
