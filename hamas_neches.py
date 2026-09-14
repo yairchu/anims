@@ -15,33 +15,12 @@ def _():
 
 @app.cell
 def _(mo):
-    isr_y_slider = mo.ui.slider(0, 1, 0.001, 0.5, label="Israel political axis y", full_width=True)
-    isr_y_slider
-    return (isr_y_slider,)
-
-
-@app.cell
-def _(isr_y_slider):
-    isr_y = isr_y_slider.value
-    return (isr_y,)
-
-
-@app.cell
-def _():
-    line_y = 0.08
-    return (line_y,)
-
-
-@app.cell
-def _():
-    label_x = 0.12
-    return (label_x,)
-
-
-@app.cell
-def _():
-    label_common = 'font-size="0.07" text-anchor="middle" alignment-baseline="middle" fill="black"'
-    return (label_common,)
+    political_position = mo.ui.slider(
+        0, 1, 0.001, 0.5, label="Political position (left → right)",
+        show_value=False, full_width=True,
+    )
+    political_position
+    return (political_position,)
 
 
 @app.cell
@@ -59,32 +38,37 @@ def _(base64, pathlib):
 
 
 @app.cell
-def _(isr_y, kach_logo_uri, label_common, label_x, line_y, mo, vegan_logo_uri):
-    mo.md(f"""
-    <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 1 1" style="max-width: 100%; height: auto;" role="img">
-    <line x1="0.23" y1="{isr_y}" x2="0.75" y2="{isr_y}" stroke="blue" stroke-width="0.02" />
-    <text x="{label_x}" y="{isr_y - line_y}" {label_common}> לכולם </text>
-    <text x="{label_x}" y="{isr_y}" {label_common}> מגיע </text>
-    <text x="{label_x}" y="{isr_y + line_y}" {label_common}> זכויות </text>
-    <image href="{vegan_logo_uri}" x="0.02" y="{isr_y + 0.14}" width="0.15" height="0.15" />
-    <text x="{1 - label_x}" y="{isr_y - line_y}" {label_common}> ישראל </text>
-    <text x="{1 - label_x}" y="{isr_y}" {label_common}> ליהודים </text>
-    <text x="{1 - label_x}" y="{isr_y + line_y}" {label_common}> בלבד </text>
-    <image href="{kach_logo_uri}" x="0.83" y="{isr_y + 0.14}" width="0.15" height="0.15">
-      <title>כך</title>
-    </image>
+def _(kach_logo_uri, mo, political_position, vegan_logo_uri):
+    # The needle sweeps 100 degrees along a circle centered on its pivot.
+    needle_angle = -50 + 100 * political_position.value
+    mo.Html(f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"
+         style="max-width: 100%; height: auto; background: white;" role="img"
+         aria-labelledby="political-meter-title">
+      <title id="political-meter-title">מד פוליטי משמאל לימין — המחשה</title>
+      <path d="M 116.149 185.731 A 240 240 0 0 1 483.851 185.731"
+            fill="none" stroke="blue" stroke-width="10" stroke-linecap="round" />
+      <g fill="black" font-size="26" font-family="Arial, sans-serif"
+         text-anchor="middle" direction="rtl">
+        <text x="60" y="194">לכולם</text>
+        <text x="60" y="224">מגיע</text>
+        <text x="60" y="254">זכויות</text>
+        <text x="540" y="194">ישראל</text>
+        <text x="540" y="224">ליהודים</text>
+        <text x="540" y="254">בלבד</text>
+      </g>
+      <image href="{vegan_logo_uri}" x="20" y="274" width="80" height="80">
+        <title>Vegan Friendly</title>
+      </image>
+      <image href="{kach_logo_uri}" x="500" y="274" width="80" height="80">
+        <title>כך</title>
+      </image>
+      <g transform="rotate({needle_angle} 300 340)">
+        <path d="M 294 340 L 300 112 L 306 340 Z" fill="#b45309" />
+      </g>
+      <circle cx="300" cy="340" r="12" fill="#b45309" />
+      <circle cx="300" cy="340" r="4" fill="white" />
     </svg>
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    <g fill="#b45309" stroke="#b45309">
-      <line x1="0.32" y1="0.36" x2="0.64" y2="0.36" stroke-width="0.018" stroke-linecap="round" />
-      <polygon points="0.69,0.36 0.63,0.325 0.63,0.395" stroke="none" />
-    </g>
     """)
     return
 
