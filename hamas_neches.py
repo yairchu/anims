@@ -75,6 +75,21 @@ def _(mo):
 
 
 @app.cell
+def _(mo):
+    pal_translation_progress = mo.ui.slider(
+        0,
+        1,
+        0.01,
+        0,
+        label="Palestinian labels: Arabic → Hebrew",
+        show_value=True,
+        full_width=True,
+    )
+    pal_translation_progress
+    return (pal_translation_progress,)
+
+
+@app.cell
 def _(base64, pathlib):
     vegan_logo_path = pathlib.Path(__file__).with_name("vegan-friendly.png")
     vegan_logo_uri = "data:image/png;base64," + base64.b64encode(
@@ -148,17 +163,28 @@ def _():
     def render_meter(
         *, meter_id, title, color, needle_color, position, labels,
         y_offset=0, upside_down=False, logos=(),
+        translated_labels=None, translation_progress=0,
     ):
         # Mirror only the geometry so the labels and logos stay upright.
         geometry_transform = "translate(0 400) scale(1 -1)" if upside_down else ""
         # Vertical reflection preserves the left-to-right needle sweep.
         needle_angle = -50 + 100 * position
         label_y = 166 if upside_down else 194
-        label_svg = "".join(
-            f'<text x="{x}" y="{label_y + 30 * line}">{escape(text)}</text>'
-            for x, lines in zip((60, 540), labels)
-            for line, text in enumerate(lines)
-        )
+        def render_labels(texts, opacity):
+            text_svg = "".join(
+                f'<text x="{x}" y="{label_y + 15 * (3 - len(lines)) + 30 * line}">'
+                f'{escape(text)}</text>'
+                for x, lines in zip((60, 540), texts)
+                for line, text in enumerate(lines)
+            )
+            return f'<g opacity="{opacity}">{text_svg}</g>'
+
+        # Smoothstep eases the reveal while keeping it fully scrubbable.
+        progress = max(0, min(1, translation_progress))
+        blend = progress * progress * (3 - 2 * progress)
+        label_svg = render_labels(labels, 1 - blend if translated_labels else 1)
+        if translated_labels is not None:
+            label_svg += render_labels(translated_labels, blend)
         logo_y = 46 if upside_down else 274
         logo_svg = "".join(
             f'<image href="{escape(uri, quote=True)}" x="{x}" y="{logo_y}" '
@@ -194,6 +220,7 @@ def _(
     pal_meter_color,
     pal_meter_y_offset,
     pal_political_position,
+    pal_translation_progress,
     political_position,
     render_meter,
     vegan_logo_uri,
@@ -211,7 +238,12 @@ def _(
                 y_offset=pal_meter_y_offset.value,
                 position=pal_political_position.value,
                 upside_down=True,
-                labels=(("טקסט", "שמאל", "זמני"), ("טקסט", "ימין", "זמני")),
+                labels=(("الحقوق", "للجميع"), ("فلسطين", "للمسلمين", "فقط")),
+                translated_labels=(
+                    ("לכולם", "מגיע", "זכויות"),
+                    ("פלסטין", "למוסלמים", "בלבד"),
+                ),
+                translation_progress=pal_translation_progress.value,
             ),
             dict(
                 meter_id="israeli-political-meter",
