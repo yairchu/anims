@@ -21,7 +21,7 @@ def _(mo):
         1,
         0.001,
         0.5,
-        label="Political position (left → right)",
+        label="Israeli political position (left → right)",
         show_value=False,
         full_width=True,
     )
@@ -42,6 +42,36 @@ def _(mo):
     )
     isr_meter_y_offset
     return (isr_meter_y_offset,)
+
+
+@app.cell
+def _(mo):
+    pal_meter_y_offset = mo.ui.slider(
+        -400,
+        300,
+        1,
+        -400,
+        label="Palestinian meter vertical offset (positive → down)",
+        show_value=True,
+        full_width=True,
+    )
+    pal_meter_y_offset
+    return (pal_meter_y_offset,)
+
+
+@app.cell
+def _(mo):
+    pal_political_position = mo.ui.slider(
+        0,
+        1,
+        0.001,
+        0.5,
+        label="Palestinian political position (left → right)",
+        show_value=False,
+        full_width=True,
+    )
+    pal_political_position
+    return (pal_political_position,)
 
 
 @app.cell
@@ -162,6 +192,8 @@ def _(
     mo,
     needle_color,
     pal_meter_color,
+    pal_meter_y_offset,
+    pal_political_position,
     political_position,
     render_meter,
     vegan_logo_uri,
@@ -170,13 +202,14 @@ def _(
         render_meter(
             **config,
             needle_color=needle_color,
-            position=political_position.value,
         )
         for config in (
             dict(
                 meter_id="palestinian-political-meter",
                 title="Palestinian political meter",
                 color=pal_meter_color,
+                y_offset=pal_meter_y_offset.value,
+                position=pal_political_position.value,
                 upside_down=True,
                 labels=(("טקסט", "שמאל", "זמני"), ("טקסט", "ימין", "זמני")),
             ),
@@ -184,6 +217,7 @@ def _(
                 meter_id="israeli-political-meter",
                 title="Israeli political meter",
                 color=isr_meter_color,
+                position=political_position.value,
                 y_offset=300 + isr_meter_y_offset.value,
                 labels=(("לכולם", "מגיע", "זכויות"), ("ישראל", "ליהודים", "בלבד")),
                 logos=((vegan_logo_uri, "Vegan Friendly"), (kach_logo_uri, "כך")),
@@ -192,7 +226,7 @@ def _(
     )
     mo.Html(f'''
     <svg xmlns="http://www.w3.org/2000/svg" width="600" height="1000" viewBox="0 0 600 1000"
-         style="max-width: 100%; height: auto; background: white;" role="img"
+         style="max-width: 100%; height: auto; background: white; overflow: hidden;" role="img"
          aria-labelledby="political-meter-title">
       <title id="political-meter-title">מדדים פוליטיים — פלסטינים וישראלים</title>
       <rect width="600" height="1000" fill="none" stroke="black" />
