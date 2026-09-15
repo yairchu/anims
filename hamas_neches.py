@@ -81,7 +81,7 @@ def _(mo):
         1,
         0.01,
         0,
-        label="Palestinian labels: Arabic → Hebrew",
+        label="Palestinian labels: Arabic → Hebrew (blur)",
         show_value=True,
         full_width=True,
     )
@@ -170,21 +170,33 @@ def _():
         # Vertical reflection preserves the left-to-right needle sweep.
         needle_angle = -50 + 100 * position
         label_y = 166 if upside_down else 194
-        def render_labels(texts, opacity):
+        def render_labels(texts, opacity, blur=0, layer="original"):
             text_svg = "".join(
                 f'<text x="{x}" y="{label_y + 15 * (3 - len(lines)) + 30 * line}">'
                 f'{escape(text)}</text>'
                 for x, lines in zip((60, 540), texts)
                 for line, text in enumerate(lines)
             )
-            return f'<g opacity="{opacity}">{text_svg}</g>'
+            if blur == 0:
+                return f'<g opacity="{opacity}">{text_svg}</g>'
+            filter_id = f"{meter_id}-{layer}-blur"
+            return f'''<defs>
+              <filter id="{filter_id}" x="-20%" y="-50%" width="140%" height="200%">
+                <feGaussianBlur stdDeviation="{blur}" />
+              </filter>
+            </defs>
+            <g opacity="{opacity}" filter="url(#{filter_id})">{text_svg}</g>'''
 
         # Smoothstep eases the reveal while keeping it fully scrubbable.
         progress = max(0, min(1, translation_progress))
         blend = progress * progress * (3 - 2 * progress)
-        label_svg = render_labels(labels, 1 - blend if translated_labels else 1)
+        label_svg = render_labels(labels, 1)
         if translated_labels is not None:
-            label_svg += render_labels(translated_labels, blend)
+            # At the midpoint both languages are softly defocused; endpoints are crisp.
+            label_svg = render_labels(labels, 1 - blend, blur=8 * blend)
+            label_svg += render_labels(
+                translated_labels, blend, blur=8 * (1 - blend), layer="translation"
+            )
         logo_y = 46 if upside_down else 274
         logo_svg = "".join(
             f'<image href="{escape(uri, quote=True)}" x="{x}" y="{logo_y}" '
