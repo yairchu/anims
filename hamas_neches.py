@@ -81,6 +81,23 @@ def _(isr_meter_color_picker):
 
 @app.cell
 def _(mo, wigglystuff):
+    pal_meter_color_picker = mo.ui.anywidget(
+        wigglystuff.ColorPicker(color="#149149")
+    )
+    mo.hstack(
+        [mo.md("Palestinian meter color:"), pal_meter_color_picker], justify="start"
+    )
+    return (pal_meter_color_picker,)
+
+
+@app.cell
+def _(pal_meter_color_picker):
+    pal_meter_color = pal_meter_color_picker.value["color"]
+    return (pal_meter_color,)
+
+
+@app.cell
+def _(mo, wigglystuff):
     needle_color_picker = mo.ui.anywidget(
         wigglystuff.ColorPicker(color="#7a7a7a")
     )
@@ -95,54 +112,93 @@ def _(needle_color_picker):
 
 
 @app.cell
+def _():
+    from html import escape
+
+    def render_meter(
+        *, meter_id, title, color, needle_color, position, labels,
+        y_offset=0, upside_down=False, logos=(),
+    ):
+        # Mirror only the geometry so the labels and logos stay upright.
+        geometry_transform = "translate(0 400) scale(1 -1)" if upside_down else ""
+        # Vertical reflection preserves the left-to-right needle sweep.
+        needle_angle = -50 + 100 * position
+        label_y = 166 if upside_down else 194
+        label_svg = "".join(
+            f'<text x="{x}" y="{label_y + 30 * line}">{escape(text)}</text>'
+            for x, lines in zip((60, 540), labels)
+            for line, text in enumerate(lines)
+        )
+        logo_y = 46 if upside_down else 274
+        logo_svg = "".join(
+            f'<image href="{escape(uri, quote=True)}" x="{x}" y="{logo_y}" '
+            f'width="80" height="80"><title>{escape(name)}</title></image>'
+            for x, (uri, name) in zip((20, 500), logos)
+        )
+        return f'''<g id="{meter_id}" transform="translate(0 {y_offset})"
+                       role="img" aria-label="{escape(title, quote=True)}">
+          <g transform="{geometry_transform}">
+            <path d="M 116.149 185.731 A 240 240 0 0 1 483.851 185.731"
+                  fill="none" stroke="{color}" stroke-width="10" stroke-linecap="round" />
+            <g transform="rotate({needle_angle} 300 340)">
+              <path d="M 294 340 L 300 112 L 306 340 Z" fill="{needle_color}" />
+            </g>
+            <circle cx="300" cy="340" r="12" fill="{needle_color}" />
+            <circle cx="300" cy="340" r="4" fill="white" />
+          </g>
+          <g fill="black" font-size="26" font-family="Arial, sans-serif"
+             text-anchor="middle" direction="rtl">{label_svg}</g>
+          {logo_svg}
+        </g>'''
+
+    return (render_meter,)
+
+
+@app.cell
 def _(
     isr_meter_color,
     isr_meter_y_offset,
     kach_logo_uri,
     mo,
     needle_color,
+    pal_meter_color,
     political_position,
+    render_meter,
     vegan_logo_uri,
 ):
-    # The needle sweeps 100 degrees along a circle centered on its pivot.
-    needle_angle = -50 + 100 * political_position.value
-    mo.Html(f"""
-    <svg xmlns="http://www.w3.org/2000/svg" width="600" height="700" viewBox="0 0 600 700"
+    meters_svg = "".join(
+        render_meter(
+            **config,
+            needle_color=needle_color,
+            position=political_position.value,
+        )
+        for config in (
+            dict(
+                meter_id="palestinian-political-meter",
+                title="Palestinian political meter",
+                color=pal_meter_color,
+                upside_down=True,
+                labels=(("טקסט", "שמאל", "זמני"), ("טקסט", "ימין", "זמני")),
+            ),
+            dict(
+                meter_id="israeli-political-meter",
+                title="Israeli political meter",
+                color=isr_meter_color,
+                y_offset=300 + isr_meter_y_offset.value,
+                labels=(("לכולם", "מגיע", "זכויות"), ("ישראל", "ליהודים", "בלבד")),
+                logos=((vegan_logo_uri, "Vegan Friendly"), (kach_logo_uri, "כך")),
+            ),
+        )
+    )
+    mo.Html(f'''
+    <svg xmlns="http://www.w3.org/2000/svg" width="600" height="1000" viewBox="0 0 600 1000"
          style="max-width: 100%; height: auto; background: white;" role="img"
          aria-labelledby="political-meter-title">
-      <title id="political-meter-title">מד פוליטי משמאל לימין — המחשה</title>
-      <rect width="600" height="700" fill="none" stroke="black" />
-      <g id="israeli-political-meter" transform="translate(0 {isr_meter_y_offset.value})">
-        <path d="M 116.149 185.731 A 240 240 0 0 1 483.851 185.731"
-              fill="none" stroke="{isr_meter_color}" stroke-width="10" stroke-linecap="round" />
-        <g fill="black" font-size="26" font-family="Arial, sans-serif"
-           text-anchor="middle" direction="rtl">
-          <text x="60" y="194">לכולם</text>
-          <text x="60" y="224">מגיע</text>
-          <text x="60" y="254">זכויות</text>
-          <text x="540" y="194">ישראל</text>
-          <text x="540" y="224">ליהודים</text>
-          <text x="540" y="254">בלבד</text>
-        </g>
-        <image href="{vegan_logo_uri}" x="20" y="274" width="80" height="80">
-          <title>Vegan Friendly</title>
-        </image>
-        <image href="{kach_logo_uri}" x="500" y="274" width="80" height="80">
-          <title>כך</title>
-        </image>
-        <g transform="rotate({needle_angle} 300 340)">
-          <path d="M 294 340 L 300 112 L 306 340 Z" fill="{needle_color}" />
-        </g>
-        <circle cx="300" cy="340" r="12" fill="{needle_color}" />
-        <circle cx="300" cy="340" r="4" fill="white" />
-      </g>
+      <title id="political-meter-title">מדדים פוליטיים — פלסטינים וישראלים</title>
+      <rect width="600" height="1000" fill="none" stroke="black" />
+      {meters_svg}
     </svg>
-    """)
-    return
-
-
-@app.cell
-def _():
+    ''')
     return
 
 
