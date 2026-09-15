@@ -7,11 +7,12 @@ app = marimo.App(width="full")
 @app.cell
 def _():
     import base64
+    import html
     import marimo as mo
     import pathlib
     import wigglystuff
 
-    return base64, mo, pathlib, wigglystuff
+    return base64, html, mo, pathlib, wigglystuff
 
 
 @app.cell
@@ -91,20 +92,39 @@ def _(mo):
 
 @app.cell
 def _(base64, pathlib):
-    vegan_logo_path = pathlib.Path(__file__).with_name("vegan-friendly.png")
-    vegan_logo_uri = "data:image/png;base64," + base64.b64encode(
-        vegan_logo_path.read_bytes()
-    ).decode("ascii")
-    return (vegan_logo_uri,)
+    def image(name):
+        mime = name.rsplit(".", 1)[-1]
+        if mime == "svg":
+            mime = "svg+xml"
+        return f"data:image/{mime};base64," + base64.b64encode(
+            pathlib.Path(__file__).with_name(name).read_bytes()
+        ).decode("ascii")
+
+    return (image,)
 
 
 @app.cell
-def _(base64, pathlib):
-    kach_logo_path = pathlib.Path(__file__).with_name("Kach.svg")
-    kach_logo_uri = "data:image/svg+xml;base64," + base64.b64encode(
-        kach_logo_path.read_bytes()
-    ).decode("ascii")
-    return (kach_logo_uri,)
+def _(image):
+    vegan_friendly_logo = image("vegan-friendly.png")
+    return (vegan_friendly_logo,)
+
+
+@app.cell
+def _(image):
+    cfp_logo = image("cfp_logo.png")
+    return (cfp_logo,)
+
+
+@app.cell
+def _(image):
+    kach_logo = image("Kach.svg")
+    return (kach_logo,)
+
+
+@app.cell
+def _(image):
+    hamas_logo = image("Emblem_of_Hamas.svg")
+    return (hamas_logo,)
 
 
 @app.cell
@@ -130,7 +150,8 @@ def _(mo, wigglystuff):
         wigglystuff.ColorPicker(color="#149149")
     )
     mo.hstack(
-        [mo.md("Palestinian meter color:"), pal_meter_color_picker], justify="start"
+        [mo.md("Palestinian meter color:"), pal_meter_color_picker],
+        justify="start",
     )
     return (pal_meter_color_picker,)
 
@@ -157,23 +178,33 @@ def _(needle_color_picker):
 
 
 @app.cell
-def _():
-    from html import escape
-
+def _(html):
     def render_meter(
-        *, meter_id, title, color, needle_color, position, labels,
-        y_offset=0, upside_down=False, logos=(),
-        translated_labels=None, translation_progress=0,
+        *,
+        meter_id,
+        title,
+        color,
+        needle_color,
+        position,
+        labels,
+        y_offset=0,
+        upside_down=False,
+        logos=(),
+        translated_labels=None,
+        translation_progress=0,
     ):
         # Mirror only the geometry so the labels and logos stay upright.
-        geometry_transform = "translate(0 400) scale(1 -1)" if upside_down else ""
+        geometry_transform = (
+            "translate(0 400) scale(1 -1)" if upside_down else ""
+        )
         # Vertical reflection preserves the left-to-right needle sweep.
         needle_angle = -50 + 100 * position
         label_y = 166 if upside_down else 194
+
         def render_labels(texts, opacity, blur=0, layer="original"):
             text_svg = "".join(
                 f'<text x="{x}" y="{label_y + 15 * (3 - len(lines)) + 30 * line}">'
-                f'{escape(text)}</text>'
+                f"{html.escape(text)}</text>"
                 for x, lines in zip((60, 540), texts)
                 for line, text in enumerate(lines)
             )
@@ -195,16 +226,19 @@ def _():
             # At the midpoint both languages are softly defocused; endpoints are crisp.
             label_svg = render_labels(labels, 1 - blend, blur=8 * blend)
             label_svg += render_labels(
-                translated_labels, blend, blur=8 * (1 - blend), layer="translation"
+                translated_labels,
+                blend,
+                blur=8 * (1 - blend),
+                layer="translation",
             )
         logo_y = 46 if upside_down else 274
         logo_svg = "".join(
-            f'<image href="{escape(uri, quote=True)}" x="{x}" y="{logo_y}" '
-            f'width="80" height="80"><title>{escape(name)}</title></image>'
-            for x, (uri, name) in zip((20, 500), logos)
+            f'<image href="{html.escape(uri, quote=True)}" x="{x}" y="{logo_y}" '
+            f'width="80" height="80"></image>'
+            for x, uri in zip((20, 500), logos)
         )
         return f'''<g id="{meter_id}" transform="translate(0 {y_offset})"
-                       role="img" aria-label="{escape(title, quote=True)}">
+                       role="img" aria-label="{html.escape(title, quote=True)}">
           <g transform="{geometry_transform}">
             <path d="M 116.149 185.731 A 240 240 0 0 1 483.851 185.731"
                   fill="none" stroke="{color}" stroke-width="10" stroke-linecap="round" />
@@ -224,9 +258,11 @@ def _():
 
 @app.cell
 def _(
+    cfp_logo,
+    hamas_logo,
     isr_meter_color,
     isr_meter_y_offset,
-    kach_logo_uri,
+    kach_logo,
     mo,
     needle_color,
     pal_meter_color,
@@ -235,7 +271,7 @@ def _(
     pal_translation_progress,
     political_position,
     render_meter,
-    vegan_logo_uri,
+    vegan_friendly_logo,
 ):
     meters_svg = "".join(
         render_meter(
@@ -256,6 +292,7 @@ def _(
                     ("פלסטין", "למוסלמים", "בלבד"),
                 ),
                 translation_progress=pal_translation_progress.value,
+                logos=(cfp_logo, hamas_logo,),
             ),
             dict(
                 meter_id="israeli-political-meter",
@@ -263,12 +300,15 @@ def _(
                 color=isr_meter_color,
                 position=political_position.value,
                 y_offset=300 + isr_meter_y_offset.value,
-                labels=(("לכולם", "מגיע", "זכויות"), ("ישראל", "ליהודים", "בלבד")),
-                logos=((vegan_logo_uri, "Vegan Friendly"), (kach_logo_uri, "כך")),
+                labels=(
+                    ("לכולם", "מגיע", "זכויות"),
+                    ("ישראל", "ליהודים", "בלבד"),
+                ),
+                logos=(vegan_friendly_logo, kach_logo),
             ),
         )
     )
-    mo.Html(f'''
+    mo.Html(f"""
     <svg xmlns="http://www.w3.org/2000/svg" width="600" height="1000" viewBox="0 0 600 1000"
          style="max-width: 100%; height: auto; background: white; overflow: hidden;" role="img"
          aria-labelledby="political-meter-title">
@@ -276,7 +316,12 @@ def _(
       <rect width="600" height="1000" fill="none" stroke="black" />
       {meters_svg}
     </svg>
-    ''')
+    """)
+    return
+
+
+@app.cell
+def _():
     return
 
 

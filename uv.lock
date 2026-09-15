@@ -404,15 +404,15 @@ wheels = [
 
 [[package]]
 name = "moops"
-version = "0.15.5"
+version = "0.15.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "marimo-base" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/52/f4/5609a0e812a47705183b98faadfb5985180e6aa0e8378b1bee8027dd42cc/moops-0.15.5.tar.gz", hash = "sha256:1fca893843f736d3bd77ea5fd289fb07c06f07f724acc2430b74d04f1c04e4ce", size = 69284, upload-time = "2026-08-23T12:45:26.08Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/55/3d/0d4c58bbc0a00cc3aeb16acd94e67a20937e07d0c729a908cefea17059f1/moops-0.15.6.tar.gz", hash = "sha256:38154b1f88d903f5c7a89c186373911a5367fbe9e6bbfc4a421a21c534007286", size = 70625, upload-time = "2026-09-15T12:41:05.568Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/62/7836565749420e97f00bb4b97689fb198b98218ceb39529ef55a5bc0eac2/moops-0.15.5-py3-none-any.whl", hash = "sha256:43bf8c61ebb1954adbb3ad8eecfa0943ec62934005637e31f486392ea873bbbe", size = 81271, upload-time = "2026-08-23T12:45:24.665Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/e1/cc81483ae8b3a7a6171be7bc167ada4b09b9f7cb339f16a2771789369b2a/moops-0.15.6-py3-none-any.whl", hash = "sha256:2fabdf05fceb19154bce7b1f3310050aa14a39a5b171d46d621f52e5b24ed78b", size = 82624, upload-time = "2026-09-15T12:41:04.017Z" },
 ]
 
 [[package]]
@@ -729,15 +729,15 @@ wheels = [
 
 [[package]]
 name = "uvicorn"
-version = "0.52.4"
+version = "0.53.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "h11" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/0f/3f86e61397dd33bf2ccf28188c40db6a740658aeebbbf6e7dbc101a1f487/uvicorn-0.52.4.tar.gz", hash = "sha256:73acfee47a0b133c5de13d219492d62d8a31e935f4fe6e41a232451a15379f86", size = 100627, upload-time = "2026-08-19T06:27:41.821Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5d/ad/04bbb797c84fc1f26cb171f7394716f4865ffb8d8c5e1eef42565c2dfa6b/uvicorn-0.53.0.tar.gz", hash = "sha256:a9356f0cb89b3b8621529c5d5eebd69bfe154f4c3f68b4cf2de47e45fa855c2e", size = 110881, upload-time = "2026-09-14T07:44:23.815Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f1/79/4a20b54ab0491485ccd8c077db2d39187c7f12b3e15485d38a7be37c81b4/uvicorn-0.52.4-py3-none-any.whl", hash = "sha256:f86e41a149d7d05a9969337e3946a9c171c06a5d42680896daaba624aeac8da1", size = 79871, upload-time = "2026-08-19T06:27:40.36Z" },
+    { url = "https://files.pythonhosted.org/packages/76/18/0eea75741ee812e9f598b687619ce2454f6c3a1c5cd21ea990ec6bd26f45/uvicorn-0.53.0-py3-none-any.whl", hash = "sha256:e8dca71ec86dce5f04e333f0d56cdedf942446e6643b9cea1af0d6d3a02cb03e", size = 87081, upload-time = "2026-09-14T07:44:22.179Z" },
 ]
 
 [[package]]
