@@ -91,6 +91,21 @@ def _(mo):
 
 
 @app.cell
+def _(mo):
+    far_right_peek_progress = mo.ui.slider(
+        0,
+        1,
+        0.01,
+        1,
+        label="Smotrich and Bibi: in frame ← → offscreen",
+        show_value=True,
+        full_width=True,
+    )
+    far_right_peek_progress
+    return (far_right_peek_progress,)
+
+
+@app.cell
 def _(base64, pathlib):
     def image(name):
         mime = name.rsplit(".", 1)[-1]
@@ -125,6 +140,28 @@ def _(image):
 def _(image):
     hamas_logo = image("Emblem_of_Hamas.svg")
     return (hamas_logo,)
+
+
+@app.cell
+def _(image):
+    smotrich_and_bibi_image = image("smotrich_and_bibi.png")
+    return (smotrich_and_bibi_image,)
+
+
+@app.cell
+def _(far_right_peek_progress, isr_meter_y_offset, smotrich_and_bibi_image):
+    # Dragging left brings the image fully inside, with a small edge margin.
+    peek_progress = 1 - far_right_peek_progress.value
+    peek_eased = peek_progress * peek_progress * (3 - 2 * peek_progress)
+    peek_x = 600 - 170 * peek_eased
+    peek_y = 300 + isr_meter_y_offset.value + 20
+    far_right_peek_svg = f'''
+      <image href="{smotrich_and_bibi_image}" x="{peek_x}" y="{peek_y}"
+             width="140" height="140" preserveAspectRatio="xMidYMid meet">
+        <title>Smotrich and Bibi peeking above the Israeli far-right label</title>
+      </image>
+    '''
+    return (far_right_peek_svg,)
 
 
 @app.cell
@@ -259,6 +296,7 @@ def _(html):
 @app.cell
 def _(
     cfp_logo,
+    far_right_peek_svg,
     hamas_logo,
     isr_meter_color,
     isr_meter_y_offset,
@@ -292,7 +330,10 @@ def _(
                     ("פלסטין", "למוסלמים", "בלבד"),
                 ),
                 translation_progress=pal_translation_progress.value,
-                logos=(cfp_logo, hamas_logo,),
+                logos=(
+                    cfp_logo,
+                    hamas_logo,
+                ),
             ),
             dict(
                 meter_id="israeli-political-meter",
@@ -313,8 +354,9 @@ def _(
          style="max-width: 100%; height: auto; background: white; overflow: hidden;" role="img"
          aria-labelledby="political-meter-title">
       <title id="political-meter-title">מדדים פוליטיים — פלסטינים וישראלים</title>
-      <rect width="600" height="1000" fill="none" stroke="black" />
+      {far_right_peek_svg}
       {meters_svg}
+      <rect width="600" height="1000" fill="none" stroke="black" />
     </svg>
     """)
     return
