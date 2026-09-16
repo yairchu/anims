@@ -16,6 +16,16 @@ def zone_wedge(start, end):
     return f"M300 340 L{x0:.3f} {y0:.3f} A240 240 0 0 1 {x1:.3f} {y1:.3f} Z"
 
 
+def zone_emphasis(position, reconciliation_end=.25, right_zone_start=.8):
+    """Continuous emphasis, zero at a boundary and full at the end of the arc."""
+    def smooth(value):
+        value = max(0, min(1, value))
+        return value * value * (3 - 2 * value)
+
+    return (smooth((reconciliation_end-position)/reconciliation_end),
+            smooth((position-right_zone_start)/(1-right_zone_start)))
+
+
 def render_meter(
     *,
     meter_id,
@@ -32,6 +42,7 @@ def render_meter(
     reconciliation_end=.25,
     right_zone_start=.8,
     mutual_reconciliation=False,
+    reconciliation_strength=0,
     zone_labels=(("פתח", "לפיוס"), ("חלון", "לסיפוח")),
     translated_zone_labels=None,
 ):
@@ -112,11 +123,29 @@ def render_meter(
         zone_text += render_text_layer(render_zone_labels(translated_zone_labels), blend, 8*(1-blend), "zones-translation")
 
     logo_y = 46 if upside_down else 274
-    logo_svg = "".join(
-        f'<image href="{html.escape(uri, quote=True)}" x="{x}" y="{logo_y}" '
-        f'width="80" height="80"></image>'
-        for x, uri in zip((20, 500), logos)
-    )
+    left_emphasis, right_emphasis = zone_emphasis(position, reconciliation_end, right_zone_start)
+
+    def render_logo(index, uri):
+        center_x, center_y = (60, 540)[index], logo_y+40
+        emphasis = (left_emphasis, right_emphasis)[index]
+        color = ("#55b98b", "#e5a044")[index]
+        scale = 1 + .25*emphasis
+        # Both left icons receive the same extra glow as the shared opportunity grows.
+        glow = .55*emphasis + (.30*reconciliation_strength if index == 0 else 0)
+        filter_id = f"{meter_id}-logo-{index}-zone-glow"
+        return f'''<defs>
+          <filter id="{filter_id}" x="-50%" y="-50%" width="200%" height="200%"
+                  color-interpolation-filters="sRGB">
+            <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="{color}" flood-opacity="{glow:.6f}"/>
+          </filter>
+        </defs>
+        <g data-icon-zone="{'reconciliation' if index == 0 else 'right'}" data-scale="{scale:.6f}"
+           transform="translate({center_x} {center_y}) scale({scale:.6f}) translate({-center_x} {-center_y})">
+          <image href="{html.escape(uri, quote=True)}" x="{center_x-40}" y="{logo_y}"
+                 width="80" height="80" filter="url(#{filter_id})"/>
+        </g>'''
+
+    logo_svg = "".join(render_logo(index, uri) for index, uri in enumerate(logos))
     return f'''<g id="{meter_id}" transform="translate(0 {y_offset})"
                    role="img" aria-label="{html.escape(title, quote=True)}">
       <g transform="{geometry_transform}">
@@ -203,7 +232,11 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
     mutual = (state["israeli_position"] <= reconciliation_end
               and state["palestinian_position"] <= reconciliation_end
               and state["palestinian_y"] >= 0)
-    zone_options = dict(reconciliation_end=reconciliation_end, right_zone_start=right_zone_start,
+    shared_strength = min(
+        zone_emphasis(state["israeli_position"], reconciliation_end, right_zone_start)[0],
+        zone_emphasis(state["palestinian_position"], reconciliation_end, right_zone_start)[0],
+    ) if mutual else 0
+    zone_options = dict(reconciliation_strength=shared_strength, reconciliation_end=reconciliation_end, right_zone_start=right_zone_start,
                         mutual_reconciliation=mutual)
     # The drawing has a stable coordinate space; changing output size never changes motion.
     view_width = max(720, 720 * width / height)

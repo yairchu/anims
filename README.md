@@ -63,7 +63,7 @@ The alpha export removes the scene background, but deliberately preserves backgr
 
 Both meters have a green reconciliation zone (leftmost 25%) and an amber right-hand zone (rightmost 20%). Labels are **פתח לפיוס** on both left ends, **חלון לסיפוח** on the Israeli right, and **סכנת הסלמה** on the Palestinian right. Palestinian zone labels translate from Arabic along with the main labels.
 
-A left wedge brightens when its needle enters. When both visible meters enter, both brighten further and a soft green connection appears between them. Amber shading increases as each needle advances into its right zone.
+A left wedge brightens when its needle enters. When both visible meters enter, both brighten further and a soft green connection appears between them. Amber shading increases as each needle advances into its right zone. The corresponding icon smoothly grows up to 125% and gains a matching glow as the needle moves deeper into either zone. Both left icons receive an extra shared glow during reconciliation. The effect reverses on exit and remains deterministic when scrubbing.
 
 Manual mode exposes boundary sliders; their settings also apply when you switch to Timeline. The displayed export command includes them. CLI equivalents: `--reconciliation-end 0.25 --right-zone-start 0.8`. These are illustrative thresholds, not measured political probabilities.
 

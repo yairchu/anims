@@ -5,7 +5,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from animation_scene import render_scene, ASSET_FILES
+from animation_scene import render_scene, zone_emphasis, ASSET_FILES
 from animation_timeline import load_timeline, sample, state_at
 
 
@@ -91,6 +91,33 @@ class TimelineTests(unittest.TestCase):
             root = ET.fromstring(render_scene(state, assets=assets))
             return float(root.find("svg:g[@id='israeli']/svg:g/svg:path[@data-zone='right']", ns).attrib['fill-opacity'])
         self.assertLess(right_opacity(.8), right_opacity(1))
+
+    def test_icon_emphasis_is_smooth_at_zone_boundaries(self):
+        self.assertEqual(zone_emphasis(.5), (0, 0))
+        self.assertEqual(zone_emphasis(.25), (0, 0))
+        self.assertEqual(zone_emphasis(.8), (0, 0))
+        self.assertEqual(zone_emphasis(0), (1, 0))
+        self.assertEqual(zone_emphasis(1), (0, 1))
+        self.assertLess(zone_emphasis(.25-1e-6)[0], 1e-8)
+        self.assertLess(zone_emphasis(.8+1e-6)[1], 1e-8)
+
+    def test_icon_scale_and_shared_glow(self):
+        assets = {name: filename for name, filename in ASSET_FILES.items()}
+        ns = {'svg': 'http://www.w3.org/2000/svg'}
+        state = state_at(self.timeline, 23)
+        state.update(israeli_position=0, palestinian_position=.5)
+        def render():
+            return ET.fromstring(render_scene(state, assets=assets))
+        def glow(root):
+            return float(root.find(".//svg:filter[@id='israeli-logo-0-zone-glow']/svg:feDropShadow", ns).attrib['flood-opacity'])
+        solo = render()
+        icon = solo.find("svg:g[@id='israeli']/svg:g[@data-icon-zone='reconciliation']", ns)
+        self.assertAlmostEqual(float(icon.attrib['data-scale']), 1.25)
+        state['palestinian_position'] = 0
+        both = render()
+        self.assertGreater(glow(both), glow(solo))
+        state['palestinian_y'] = -400
+        self.assertEqual(glow(render()), glow(solo))
 
     def test_alpha_export_omits_only_background(self):
         assets = {name: filename for name, filename in ASSET_FILES.items()}
