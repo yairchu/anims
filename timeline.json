@@ -1,0 +1,231 @@
+{
+  "duration": 25,
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "chapters": [
+    {
+      "time": 0,
+      "label": "Israeli spectrum"
+    },
+    {
+      "time": 3,
+      "label": "Introduce the politicians"
+    },
+    {
+      "time": 5,
+      "label": "Direct attempts"
+    },
+    {
+      "time": 8,
+      "label": "Reveal the neighbours"
+    },
+    {
+      "time": 11,
+      "label": "Translate the labels"
+    },
+    {
+      "time": 13,
+      "label": "Money to Hamas"
+    },
+    {
+      "time": 17,
+      "label": "Attacks and reaction"
+    },
+    {
+      "time": 22,
+      "label": "Political outcome"
+    }
+  ],
+  "tracks": {
+    "israeli_position": [
+      [
+        0,
+        0.5
+      ],
+      [
+        5,
+        0.5
+      ],
+      [
+        5.5,
+        0.59
+      ],
+      [
+        6,
+        0.5
+      ],
+      [
+        6.5,
+        0.61
+      ],
+      [
+        7,
+        0.5
+      ],
+      [
+        17.8,
+        0.5
+      ],
+      [
+        18.6,
+        0.61
+      ],
+      [
+        19.4,
+        0.61
+      ],
+      [
+        20.2,
+        0.73
+      ],
+      [
+        21,
+        0.73
+      ],
+      [
+        21.8,
+        0.86
+      ]
+    ],
+    "palestinian_position": [
+      [
+        0,
+        0.5
+      ],
+      [
+        14,
+        0.5
+      ],
+      [
+        15,
+        0.63
+      ],
+      [
+        16,
+        0.76
+      ],
+      [
+        17,
+        0.88
+      ]
+    ],
+    "israeli_y": [
+      [
+        0,
+        140
+      ],
+      [
+        8,
+        140
+      ],
+      [
+        10,
+        300
+      ]
+    ],
+    "palestinian_y": [
+      [
+        0,
+        -400
+      ],
+      [
+        8,
+        -400
+      ],
+      [
+        10,
+        0
+      ]
+    ],
+    "portrait": [
+      [
+        0,
+        0
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        4.5,
+        1
+      ]
+    ],
+    "translation": [
+      [
+        0,
+        0
+      ],
+      [
+        11,
+        0
+      ],
+      [
+        12.5,
+        1
+      ]
+    ],
+    "outcome": [
+      [
+        0,
+        0
+      ],
+      [
+        22,
+        0
+      ],
+      [
+        23,
+        1
+      ]
+    ]
+  },
+  "events": [
+    {
+      "kind": "push",
+      "start": 5,
+      "duration": 0.9
+    },
+    {
+      "kind": "push",
+      "start": 6,
+      "duration": 0.9
+    },
+    {
+      "kind": "cash",
+      "start": 13,
+      "duration": 1.5
+    },
+    {
+      "kind": "cash",
+      "start": 13.8,
+      "duration": 1.5
+    },
+    {
+      "kind": "cash",
+      "start": 14.6,
+      "duration": 1.5
+    },
+    {
+      "kind": "cash",
+      "start": 15.4,
+      "duration": 1.5
+    },
+    {
+      "kind": "knife",
+      "start": 17,
+      "duration": 1.2
+    },
+    {
+      "kind": "knife",
+      "start": 18.6,
+      "duration": 1.2
+    },
+    {
+      "kind": "knife",
+      "start": 20.2,
+      "duration": 1.2
+    }
+  ]
+}

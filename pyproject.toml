@@ -9,3 +9,8 @@ dependencies = [
     "moops>=0.15.5",
     "wigglystuff>=0.5.32",
 ]
+
+[dependency-groups]
+dev = [
+    "resvg-py>=0.5.0",
+]
