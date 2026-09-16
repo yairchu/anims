@@ -94,12 +94,16 @@ def render_meter(
             (reconciliation_end/2, (right_zone_start+1)/2), texts, ("#277351", "#955c18")
         ):
             x, y = meter_point(center, radius=178)
+            # Follow the arc tangent; reflection reverses the tilt, not the text.
+            angle = -50 + 100 * center
             if upside_down:
                 y = 400-y
-            parts.extend(
+                angle = -angle
+            text_svg = "".join(
                 f'<text x="{x:.3f}" y="{y + 17*(line-(len(lines)-1)/2):.3f}" fill="{color}">{html.escape(text)}</text>'
                 for line, text in enumerate(lines)
             )
+            parts.append(f'<g transform="rotate({angle:.3f} {x:.3f} {y:.3f})">{text_svg}</g>')
         return "".join(parts)
 
     zone_text = render_text_layer(render_zone_labels(zone_labels), 1)
