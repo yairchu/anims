@@ -1,0 +1,10 @@
+{
+  "scenes": [
+    "blocked",
+    "escalation"
+  ],
+  "transition": {
+    "duration": 1.5,
+    "title": "והצד השני של המטבע"
+  }
+}

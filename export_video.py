@@ -11,12 +11,14 @@ from pathlib import Path
 import resvg_py
 from animation_scene import render_scene
 from video_formats import FORMATS
-from animation_timeline import DEFAULT_TIMELINE, load_timeline, state_at
+from animation_timeline import SCENE_LABELS, load_scene, state_at
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--timeline", type=Path, default=DEFAULT_TIMELINE)
+    source = parser.add_mutually_exclusive_group()
+    source.add_argument("--timeline", type=Path, help="Custom standalone timeline JSON")
+    source.add_argument("--scene", choices=SCENE_LABELS.values(), default="escalation")
     parser.add_argument("--output", type=Path, default=Path("output/political-spectrum.mp4"))
     parser.add_argument("--transparent", action="store_true", help="ProRes 4444 with alpha; requires .mov output")
     parser.add_argument("--format", choices=FORMATS, help="Video aspect-ratio preset")
@@ -25,6 +27,9 @@ def main():
     parser.add_argument("--fps", type=float)
     parser.add_argument("--reconciliation-end", type=float, default=.25)
     parser.add_argument("--right-zone-start", type=float, default=.8)
+    parser.add_argument("--israeli-color", default="#0056d6")
+    parser.add_argument("--palestinian-color", default="#149149")
+    parser.add_argument("--needle-color", default="#7a7a7a")
     parser.add_argument("--start", type=float, default=0)
     parser.add_argument("--end", type=float)
     parser.add_argument("--stills", type=Path, help="Also save chapter frames for visual review")
@@ -32,7 +37,7 @@ def main():
     args = parser.parse_args()
     if not 0 < args.reconciliation_end < args.right_zone_start < 1:
         parser.error("Zone boundaries must satisfy 0 < reconciliation-end < right-zone-start < 1")
-    config = load_timeline(args.timeline)
+    config = load_scene(args.scene, args.timeline)
     preset_width, preset_height = FORMATS[args.format] if args.format else (config["width"], config["height"])
     width = args.width if args.width is not None else preset_width
     height = args.height if args.height is not None else preset_height
@@ -59,6 +64,8 @@ def main():
         def draw(time):
             svg = render_scene(state_at(config, time), width=width,
                                height=height, transparent=args.transparent,
+                               israeli_color=args.israeli_color, palestinian_color=args.palestinian_color,
+                               needle_color=args.needle_color,
                                reconciliation_end=args.reconciliation_end, right_zone_start=args.right_zone_start)
             return rasterize(svg)
 
@@ -98,7 +105,8 @@ def main():
                     process.wait()
         temp_output.replace(args.output)
         (args.output.with_suffix(args.output.suffix + ".json")).write_text(json.dumps({
-            "timeline": config, "width": width, "height": height, "fps": fps,
+            "timeline": config, "israeli_color": args.israeli_color,
+            "palestinian_color": args.palestinian_color, "needle_color": args.needle_color, "width": width, "height": height, "fps": fps,
             "start": args.start, "end": end, "frames": frames, "transparent": args.transparent,
             "reconciliation_end": args.reconciliation_end, "right_zone_start": args.right_zone_start,
         }, indent=2))

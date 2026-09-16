@@ -172,13 +172,66 @@ ASSET_FILES = {
 }
 
 
-@lru_cache
+ACTOR_FILES = {name: f"{name}.png" for name in ("netanyahu", "abbas", "smotrich")}
+
+
+def available_asset_files():
+    return ASSET_FILES | {name: filename for name, filename in ACTOR_FILES.items()
+                          if Path(__file__).with_name(filename).is_file()}
+
+
 def embedded_assets():
     return {
         name: "data:image/" + ("svg+xml" if filename.endswith(".svg") else "png")
-        + ";base64," + base64.b64encode(Path(__file__).with_name(filename).read_bytes()).decode()
-        for name, filename in ASSET_FILES.items()
+        + ";base64," + encoded_asset(filename, Path(__file__).with_name(filename).stat().st_mtime_ns)
+        for name, filename in available_asset_files().items()
     }
+
+
+@lru_cache(maxsize=32)
+def encoded_asset(filename, modified):
+    return base64.b64encode(Path(__file__).with_name(filename).read_bytes()).decode()
+
+
+def render_actor(name, label, x, y, opacity, assets):
+    if opacity <= 0:
+        return ""
+    portrait = (f'<image href="{html.escape(assets[name], quote=True)}" x="-55" y="-105" width="110" height="110" preserveAspectRatio="xMidYMax meet"/>'
+                if name in assets else '<circle cy="-43" r="22" fill="#dce4ee"/><path d="M-36 0 Q-36-25 0-25 Q36-25 36 0" fill="#dce4ee"/>')
+    return f'''<g id="actor-{name}" transform="translate({x} {y})" opacity="{opacity}">
+      {portrait}
+      <rect x="-65" y="5" width="130" height="35" rx="10" fill="white" stroke="#d1d9e2"/>
+      <text y="29" text-anchor="middle" direction="rtl" font-size="19" font-family="Arial, sans-serif" fill="#27364b">{label}</text>
+    </g>'''
+
+
+def render_blocked(state, assets):
+    """A hypothetical needle never changes the actual political-position track."""
+    y = state["israeli_y"]
+    left_x = 140 + 30 * state["netanyahu"]
+    right_x = 460 - 30 * state["abbas"]
+    actor_y = y + 10
+    partnership = f'''<g id="partnership" opacity="{state['partnership']}">
+      <path d="M{left_x+65} {actor_y-18} H{right_x-65}" stroke="#55a986" stroke-width="4" stroke-dasharray="8 6"/>
+      <text x="300" y="{actor_y-36}" direction="rtl" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#277351">שותפות אפשרית</text>
+    </g>'''
+    potential = f'''<g id="potential-needle" opacity="{state['potential_opacity']}" transform="translate(0 {y})">
+      <g transform="rotate({-50+100*state['potential_position']} 300 340)">
+        <path d="M300 330 V112" fill="none" stroke="#379970" stroke-width="5" stroke-dasharray="9 7"/>
+        <path d="M292 126 L300 112 L308 126" fill="none" stroke="#379970" stroke-width="4"/>
+      </g>
+      <text x="200" y="382" text-anchor="middle" direction="rtl" font-family="Arial, sans-serif" font-size="19" fill="#277351">אפשרות ליותר דו־קיום</text>
+    </g>'''
+    block = f'''<g id="partnership-block" opacity="{state['block']}" stroke="#ac5151" stroke-width="5" stroke-linecap="round">
+      <path d="M288 {actor_y-30} L312 {actor_y-6} M312 {actor_y-30} L288 {actor_y-6}"/>
+    </g>'''
+    # The blocker enters from above, leaving the meter and its actual needle readable.
+    actors = render_actor("netanyahu", "נתניהו", left_x, actor_y, state["netanyahu"], assets)
+    actors += render_actor("abbas", "מנסור עבאס", right_x, actor_y, state["abbas"], assets)
+    actors += render_actor("smotrich", "סמוטריץ׳", 300, actor_y-120-35*(1-state["smotrich"]), state["smotrich"], assets)
+    caption = f'''<text id="blocked-outcome" x="300" y="{y+382}" opacity="{state['outcome']}"
+      text-anchor="middle" direction="rtl" font-family="Arial, sans-serif" font-size="19" fill="#5c6674">האפשרות נחסמה</text>'''
+    return partnership + potential + actors + block + caption
 
 
 def bezier(start, control, end, progress):
@@ -229,6 +282,14 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
     if not 0 < reconciliation_end < right_zone_start < 1:
         raise ValueError("Zone boundaries must satisfy 0 < left < right < 1")
     assets = embedded_assets() if assets is None else assets
+    # Transition cards use the same canvas/background and work with alpha export.
+    if state.get("scene") == "transition":
+        background = "" if transparent else '<rect width="100%" height="100%" fill="white"/>'
+        return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
+          {background}<text x="{width/2}" y="{height/2}" text-anchor="middle" direction="rtl"
+          font-family="Arial, sans-serif" font-size="{min(width,height)*.045}" fill="{israeli_color}"
+          opacity="{state.get('scene_opacity',1)}">{html.escape(state['title'])}</text></svg>'''
+    blocked = state.get("scene") == "blocked"
     mutual = (state["israeli_position"] <= reconciliation_end
               and state["palestinian_position"] <= reconciliation_end
               and state["palestinian_y"] >= 0)
@@ -272,12 +333,20 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
         connection = f'''<path id="reconciliation-connection"
           d="M{x0:.3f} {y_top:.3f} C{x0-55:.3f} {y_top+40:.3f}, {x0-55:.3f} {y_bottom-40:.3f}, {x0:.3f} {y_bottom:.3f}"
           fill="none" stroke="#55b98b" stroke-width="12" stroke-opacity=".25" stroke-linecap="round"/>'''
+    if blocked:
+        portrait, pal, connection = "", "", ""
+    scene_art = render_blocked(state, assets) if blocked else render_events(state)
     # A neutral visual highlight of the outcome, without inventing dialogue or motive.
     outcome = f'''<g opacity="{state['outcome']}" fill="none" stroke="{israeli_color}" stroke-width="3">
       <circle cx="300" cy="{state['israeli_y']+340}" r="20"/>
     </g>'''
+    if blocked:
+        outcome = ""
+    artwork = f"{portrait}{connection}{pal}{isr}{scene_art}{outcome}"
+    if "scene_opacity" in state:
+        artwork = f'<g opacity="{state["scene_opacity"]}">{artwork}</g>'
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"
         viewBox="{view_x} {view_y} {view_width} {view_height}" style="max-width:100%;height:auto;overflow:hidden"
         role="img" aria-label="Political spectrum animation">
-      {background}{portrait}{connection}{pal}{isr}{render_events(state)}{outcome}
+      {background}{artwork}
     </svg>'''

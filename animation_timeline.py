@@ -4,6 +4,9 @@ import math
 from pathlib import Path
 
 DEFAULT_TIMELINE = Path(__file__).with_name("timeline.json")
+SCENE_LABELS = {"Blocked partnership": "blocked", "Escalation": "escalation", "Full sequence": "full"}
+SCENE_FILES = {"blocked": "timeline_blocked.json", "escalation": "timeline.json"}
+BLOCKED_TRACKS = {"potential_position", "potential_opacity", "netanyahu", "abbas", "smotrich", "partnership", "block"}
 TRACKS = {"israeli_position", "palestinian_position", "israeli_y", "palestinian_y",
           "portrait", "translation", "outcome"}
 
@@ -31,8 +34,12 @@ def load_timeline(path=DEFAULT_TIMELINE):
     for name in ("width", "height"):
         if not isinstance(data[name], int) or data[name] % 2:
             raise ValueError(f"{name} must be an even integer")
-    if set(data["tracks"]) != TRACKS:
-        raise ValueError(f"Timeline must define these tracks: {sorted(TRACKS)}")
+    scene = data.get("scene", "escalation")
+    if scene not in SCENE_FILES:
+        raise ValueError(f"Unknown scene: {scene}")
+    required = TRACKS | (BLOCKED_TRACKS if scene == "blocked" else set())
+    if set(data["tracks"]) != required:
+        raise ValueError(f"Timeline must define these tracks: {sorted(required)}")
     for name, keys in data["tracks"].items():
         if not keys or keys[0][0] != 0:
             raise ValueError(f"{name}: first keyframe must be at time 0")
@@ -61,8 +68,57 @@ def state_at(timeline, time):
     if not math.isfinite(time):
         raise ValueError("Animation time must be finite")
     time = max(0, min(timeline["duration"], time))
+    if "segments" in timeline:
+        for index, segment in enumerate(timeline["segments"]):
+            end = segment["start"] + segment["duration"]
+            if time < end or index == len(timeline["segments"]) - 1:
+                local = time - segment["start"]
+                if segment.get("scene") == "transition":
+                    return {"scene": "transition", "title": segment["title"],
+                            "scene_opacity": min(ease(local / .4), ease((segment["duration"] - local) / .4))}
+                state = state_at(segment["timeline"], local)
+                # Fade only at joins, preserving each standalone scene's timing.
+                state["scene_opacity"] = min(
+                    ease(local / .4) if index else 1,
+                    ease((segment["duration"] - local) / .4) if index < len(timeline["segments"]) - 1 else 1,
+                )
+                return state
     state = {name: sample(keys, time) for name, keys in timeline["tracks"].items()}
+    state["scene"] = timeline.get("scene", "escalation")
     state["events"] = [dict(event, progress=(time - event["start"]) / event["duration"])
                        for event in timeline["events"]
                        if event["start"] <= time < event["start"] + event["duration"]]
     return state
+
+
+def load_scene(scene="escalation", timeline_path=None):
+    """Load a standalone scene or resolve the ordered sequence into a portable snapshot."""
+    if timeline_path is not None:
+        return load_timeline(timeline_path)
+    if scene in SCENE_FILES:
+        return load_timeline(Path(__file__).with_name(SCENE_FILES[scene]))
+    if scene != "full":
+        raise ValueError(f"Unknown scene: {scene}")
+    manifest = json.loads(Path(__file__).with_name("sequence.json").read_text())
+    segments, chapters, offset = [], [], 0
+    for entry in manifest["scenes"]:
+        if segments:
+            duration = manifest["transition"]["duration"]
+            if not math.isfinite(duration) or duration <= 0:
+                raise ValueError("Transition duration must be positive and finite")
+            segments.append(dict(scene="transition", start=offset, duration=duration,
+                                 title=manifest["transition"]["title"]))
+            chapters.append(dict(time=offset, label="The other side"))
+            offset += duration
+        if entry not in SCENE_FILES:
+            raise ValueError(f"Unknown sequence scene: {entry}")
+        timeline = load_scene(entry)
+        label = next(label for label, value in SCENE_LABELS.items() if value == entry)
+        segments.append(dict(start=offset, duration=timeline["duration"], timeline=timeline))
+        chapters.extend(dict(time=offset+c["time"], label=f"{label} · {c['label']}") for c in timeline["chapters"])
+        offset += timeline["duration"]
+    if not segments:
+        raise ValueError("Sequence must contain at least one scene")
+    first = segments[0]["timeline"]
+    return dict(duration=offset, fps=first["fps"], width=first["width"], height=first["height"],
+                chapters=chapters, segments=segments, scene="full")

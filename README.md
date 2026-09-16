@@ -1,6 +1,6 @@
 # Political spectrum animation
 
-The notebook has one preview with a **Manual / Timeline** switch and a **Video format** dropdown. Both modes use the same scene renderer as export.
+The notebook has one preview with **Scene**, **Manual / Timeline**, and **Video format** controls. It opens on the blocked-partnership timeline. Both modes use the same scene renderer as export.
 
 ## Setup
 
@@ -17,7 +17,7 @@ Video rendering uses resvg (installed by `uv sync`) and FFmpeg. It does not need
 uv run marimo edit hamas_neches.py
 ```
 
-Choose **Manual** to experiment with individual sliders, or **Timeline** to scrub the complete animation. Switching modes preserves manual edits and timeline position; manual edits do not write keyframes. The Israeli Y slider now uses the same direct 0–300 offset as the timeline. Color pickers apply in both modes; exported colors currently use the defaults in `render_scene`.
+Choose **Manual** to experiment with individual sliders, or **Timeline** to scrub the complete animation. Switching modes preserves manual edits and timeline position; manual edits do not write keyframes. The Israeli Y slider now uses the same direct 0–300 offset as the timeline. Color pickers apply in both modes; the displayed export command includes the selected colors.
 
 The format dropdown defaults to **Instagram portrait, 9:16 (1080×1920)**. **Landscape, 16:9 (1920×1080)** is also available. Changing format keeps the animation timing unchanged. The notebook shows the matching export command; choosing a preview format does not rewrite `timeline.json`.
 
@@ -27,7 +27,7 @@ For playback, speed controls, scrubbing, and chapter jumps:
 uv run python animation_preview.py
 ```
 
-Open http://127.0.0.1:8765. This server listens only on localhost. Reload after changing `timeline.json`. It requires permission to bind a local port. Browser preview and native export share SVG artwork; very small differences in font/filter rendering are possible.
+Open http://127.0.0.1:8765. This server listens only on localhost. Reload after changing a timeline or `sequence.json`. It requires permission to bind a local port. Browser preview and native export share SVG artwork; very small differences in font/filter rendering are possible.
 
 ## Export
 
@@ -66,6 +66,30 @@ Both meters have a green reconciliation zone (leftmost 25%) and an amber right-h
 A left wedge brightens when its needle enters. When both visible meters enter, both brighten further and a soft green connection appears between them. Amber shading increases as each needle advances into its right zone. The corresponding icon smoothly grows up to 125% and gains a matching glow as the needle moves deeper into either zone. Both left icons receive an extra shared glow during reconciliation. The effect reverses on exit and remains deterministic when scrubbing.
 
 Manual mode exposes boundary sliders; their settings also apply when you switch to Timeline. The displayed export command includes them. CLI equivalents: `--reconciliation-end 0.25 --right-zone-start 0.8`. These are illustrative thresholds, not measured political probabilities.
+
+## Scenes and the full sequence
+
+Choose **Blocked partnership** (12 seconds), **Escalation** (the existing 25-second animation), or **Full sequence** (38.5 seconds including a 1.5-second transition). The scene dropdown is available in both the notebook and the playback preview. Each selection remembers its scrub position. Chapter navigation jumps to a beat; switching scenes does not reset manual sliders. Full sequence always uses timeline controls.
+
+The blocked-partnership scene introduces Netanyahu and Mansur Abbas, draws a possible partnership, and moves a dashed green *potential* needle left. Smotrich enters, the partnership is crossed out, and the possibility fades. The actual needle stays at its original position throughout. The Palestinian meter is absent in this introduction. Manual controls let you adjust the actors, partnership, blocking mark, potential needle, and final caption independently.
+
+- `timeline_blocked.json`: introduction timing and motion, including the seven additional actor/possibility tracks.
+- `timeline.json`: existing escalation scene, kept independently editable.
+- `sequence.json`: scene order and the transition title/duration. Fade timing at joins is 0.4 seconds; standalone timelines have no join fades.
+
+The introduction currently uses named silhouette cards. To use portraits, place transparent PNGs named `netanyahu.png`, `abbas.png`, and `smotrich.png` beside `animation_scene.py`. Each is optional: missing portraits keep their silhouette. Artwork fits inside a 110×110 box with the name beneath it; use consistently cropped busts with a little transparent padding. Newly added or replaced images appear on the next render. The existing combined portrait remains in the escalation scene.
+
+Export either scene or the complete sequence:
+
+```sh
+uv run python export_video.py --scene blocked --output output/blocked.mp4
+uv run python export_video.py --scene escalation --output output/escalation.mp4
+uv run python export_video.py --scene full --format portrait --output output/full.mp4
+```
+
+`--scene` and `--timeline` are alternatives; `--timeline path.json` loads a custom standalone scene. For compatibility, export without either option still selects escalation. The browser preview starts with the introduction; use `--scene full` to start on the full sequence. Export sidecars include all resolved timelines and transition settings. Manual sliders are for visual experiments and do not write timeline keyframes; export renders the selected timeline.
+
+Colors can also be set with `--israeli-color '#0056d6' --palestinian-color '#149149' --needle-color '#7a7a7a'`.
 
 ## Edit timing and motion
 
