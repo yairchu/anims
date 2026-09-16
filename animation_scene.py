@@ -137,14 +137,17 @@ def render_events(state):
     return "".join(parts)
 
 
-def render_scene(state, *, assets=None, width=1920, height=1080, transparent=False,
+def render_scene(state, *, assets=None, width=1080, height=1920, transparent=False,
                  israeli_color="#0056d6", palestinian_color="#149149", needle_color="#7a7a7a"):
     assets = embedded_assets() if assets is None else assets
     # The drawing has a stable coordinate space; changing output size never changes motion.
-    view_height = 720
-    view_width = max(640, view_height * width / height)
+    view_width = max(720, 720 * width / height)
+    view_height = view_width * height / width
     view_x = (600-view_width)/2
-    background = "" if transparent else f'<rect x="{view_x}" width="{view_width}" height="720" fill="white"/>'
+    view_y = (720-view_height)/2
+    background = "" if transparent else f'<rect x="{view_x}" y="{view_y}" width="{view_width}" height="{view_height}" fill="white"/>'
+    # Keep the hidden neighbour above the actual frame in both aspect ratios.
+    pal_y = state["palestinian_y"] + view_y * max(0, min(1, -state["palestinian_y"] / 400))
     portrait_start_x = view_x + view_width + 20
     portrait_x = portrait_start_x + (430 - portrait_start_x) * state["portrait"]
     portrait_y = state["israeli_y"] + 20
@@ -153,7 +156,7 @@ def render_scene(state, *, assets=None, width=1920, height=1080, transparent=Fal
     </g>'''
     pal = render_meter(meter_id="palestinian", title="Palestinian political meter",
         color=palestinian_color, needle_color=needle_color, position=state["palestinian_position"],
-        y_offset=state["palestinian_y"], upside_down=True,
+        y_offset=pal_y, upside_down=True,
         labels=(("الحقوق", "للجميع"), ("فلسطين", "للمسلمين", "فقط")),
         translated_labels=(("לכולם", "מגיע", "זכויות"), ("פלסטין", "למוסלמים", "בלבד")),
         translation_progress=state["translation"], logos=(assets["cfp"], assets["hamas"]))
@@ -166,7 +169,7 @@ def render_scene(state, *, assets=None, width=1920, height=1080, transparent=Fal
       <circle cx="300" cy="{state['israeli_y']+340}" r="20"/>
     </g>'''
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"
-        viewBox="{view_x} 0 {view_width} {view_height}" style="max-width:100%;height:auto;overflow:hidden"
+        viewBox="{view_x} {view_y} {view_width} {view_height}" style="max-width:100%;height:auto;overflow:hidden"
         role="img" aria-label="Political spectrum animation">
       {background}{portrait}{pal}{isr}{render_events(state)}{outcome}
     </svg>'''

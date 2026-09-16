@@ -1,6 +1,6 @@
 # Political spectrum animation
 
-The notebook keeps its original manual controls and adds a **Full animation timeline** scrubber. Both use the same meter renderer in `animation_scene.py`.
+The notebook has one preview with a **Manual / Timeline** switch and a **Video format** dropdown. Both modes use the same scene renderer as export.
 
 ## Setup
 
@@ -17,7 +17,9 @@ Video rendering uses resvg (installed by `uv sync`) and FFmpeg. It does not need
 uv run marimo edit hamas_neches.py
 ```
 
-Use the timeline slider at the bottom of the notebook. The original sliders remain a separate manual design preview. Color pickers apply to both notebook views; exported colors currently use the defaults in `render_scene`.
+Choose **Manual** to experiment with individual sliders, or **Timeline** to scrub the complete animation. Switching modes preserves manual edits and timeline position; manual edits do not write keyframes. The Israeli Y slider now uses the same direct 0–300 offset as the timeline. Color pickers apply in both modes; exported colors currently use the defaults in `render_scene`.
+
+The format dropdown defaults to **Instagram portrait, 9:16 (1080×1920)**. **Landscape, 16:9 (1920×1080)** is also available. Changing format keeps the animation timing unchanged. The notebook shows the matching export command; choosing a preview format does not rewrite `timeline.json`.
 
 For playback, speed controls, scrubbing, and chapter jumps:
 
@@ -29,16 +31,22 @@ Open http://127.0.0.1:8765. This server listens only on localhost. Reload after 
 
 ## Export
 
-Silent 25-second, 1920×1080, 30 fps MP4 (white background):
+Silent 25-second, 1080×1920, 30 fps portrait MP4 (white background):
 
 ```sh
-uv run python export_video.py
+uv run python export_video.py --format portrait --output output/political-spectrum-portrait.mp4
+```
+
+Landscape uses the same timeline:
+
+```sh
+uv run python export_video.py --format landscape --output output/political-spectrum-landscape.mp4
 ```
 
 Transparent ProRes 4444 for compositing in a video editor:
 
 ```sh
-uv run python export_video.py --transparent --output output/political-spectrum-alpha.mov
+uv run python export_video.py --format portrait --transparent --output output/political-spectrum-portrait-alpha.mov
 ```
 
 A short, lower-resolution render for checking changes:
@@ -75,7 +83,7 @@ All frames depend only on their timestamp. Seeking backward produces the same re
 
 The initial needle positions are illustrative and equal. These are editorial animation values, not polling estimates. The sequence does not add a “mission accomplished” quote or claim a documented intention to provoke attacks.
 
-Artwork and paths live in `animation_scene.py`. Timing is independent of artwork. The 600-unit meter design sits within a 720-unit-high scene; landscape output adds side space. Narrow formats fit the whole scene rather than cropping its labels.
+Artwork and paths live in `animation_scene.py`. Timing is independent of artwork. The 600-unit meter design sits in a centered composition. Portrait uses a 720-unit-wide canvas with extra vertical room; landscape adds side space. Both formats have an exact matching viewBox, a full-frame background, and offscreen entrances adjusted to the frame. Explicit `--width` and `--height` override preset dimensions.
 
 ## Checks
 

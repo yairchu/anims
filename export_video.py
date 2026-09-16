@@ -10,6 +10,7 @@ from pathlib import Path
 
 import resvg_py
 from animation_scene import render_scene
+from video_formats import FORMATS
 from animation_timeline import DEFAULT_TIMELINE, load_timeline, state_at
 
 
@@ -18,6 +19,7 @@ def main():
     parser.add_argument("--timeline", type=Path, default=DEFAULT_TIMELINE)
     parser.add_argument("--output", type=Path, default=Path("output/political-spectrum.mp4"))
     parser.add_argument("--transparent", action="store_true", help="ProRes 4444 with alpha; requires .mov output")
+    parser.add_argument("--format", choices=FORMATS, help="Video aspect-ratio preset")
     parser.add_argument("--width", type=int)
     parser.add_argument("--height", type=int)
     parser.add_argument("--fps", type=float)
@@ -27,8 +29,9 @@ def main():
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
     config = load_timeline(args.timeline)
-    width = args.width if args.width is not None else config["width"]
-    height = args.height if args.height is not None else config["height"]
+    preset_width, preset_height = FORMATS[args.format] if args.format else (config["width"], config["height"])
+    width = args.width if args.width is not None else preset_width
+    height = args.height if args.height is not None else preset_height
     fps = args.fps if args.fps is not None else config["fps"]
     end = args.end if args.end is not None else config["duration"]
     if width <= 0 or height <= 0 or width % 2 or height % 2:

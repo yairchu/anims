@@ -56,13 +56,28 @@ class TimelineTests(unittest.TestCase):
         for frame in range(751):
             ET.fromstring(render_scene(state_at(self.timeline, frame/30), assets=assets))
 
+    def test_format_canvas_and_hidden_entrances(self):
+        from video_formats import FORMATS
+        assets = {name: filename for name, filename in ASSET_FILES.items()}
+        ns = {"svg": "http://www.w3.org/2000/svg"}
+        for width, height in FORMATS.values():
+            root = ET.fromstring(render_scene(state_at(self.timeline, 0), assets=assets, width=width, height=height))
+            x, y, w, h = map(float, root.attrib["viewBox"].split())
+            self.assertAlmostEqual(w / h, width / height)
+            image = root.find("svg:g/svg:image", ns)
+            self.assertGreater(float(image.attrib["x"]), x+w)
+            pal = root.find("svg:g[@id='palestinian']", ns)
+            pal_y = float(pal.attrib["transform"].split()[1].rstrip(')'))
+            self.assertLess(pal_y+305, y)
+
     def test_alpha_export_omits_only_background(self):
         assets = {name: filename for name, filename in ASSET_FILES.items()}
         state = state_at(self.timeline, 14)
         opaque = render_scene(state, assets=assets)
         alpha = render_scene(state, assets=assets, transparent=True)
-        self.assertIn('height="720" fill="white"', opaque)
-        self.assertNotIn('height="720" fill="white"', alpha)
+        ns = {"svg": "http://www.w3.org/2000/svg"}
+        self.assertIsNotNone(ET.fromstring(opaque).find("svg:rect", ns))
+        self.assertIsNone(ET.fromstring(alpha).find("svg:rect", ns))
         self.assertIn('smotrich_and_bibi.png', alpha)
 
 

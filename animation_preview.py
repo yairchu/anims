@@ -1,4 +1,4 @@
-"""Local playback/scrubbing UI and asset server shared with the exporter."""
+"""Local playback/scrubbing UI using the shared SVG renderer."""
 import argparse
 import json
 import mimetypes
@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
 from animation_scene import ASSET_FILES, render_scene
+from video_formats import FORMATS
 from animation_timeline import DEFAULT_TIMELINE, load_timeline, state_at
 
 ROOT = Path(__file__).parent
@@ -22,6 +23,7 @@ nav{max-width:1200px;margin:16px auto;padding:0 16px}button,select{font:inherit;
 #seek{width:100%;margin:16px 0}#chapters{display:flex;gap:6px;flex-wrap:wrap}#chapters button{font-size:12px}
 </style><div id="stage"></div><nav><button id="play">Play</button>
 <select id="speed"><option value="0.5">0.5×</option><option selected value="1">1×</option><option value="2">2×</option></select>
+<select id="format" aria-label="Video format"><option value="portrait">Instagram portrait · 9:16</option><option value="landscape">Landscape · 16:9</option></select>
 <output id="time"></output><input id="seek" aria-label="Timeline time" type="range" min="0" step="0.01">
 <div id="chapters"></div><p>Edit timeline.json, then reload to pick up timing changes. Export with export_video.py.</p></nav>
 <script>
@@ -29,7 +31,9 @@ let config, time=0, playing=false, last=0, busy=false, revision=0;
 const stage=document.querySelector('#stage'), seek=document.querySelector('#seek'), button=document.querySelector('#play');
 async function draw(t){
   const mine=++revision;
-  const response=await fetch('/frame?t='+t);
+  const format=document.querySelector('#format').value;
+  stage.style.maxWidth=format==='portrait'?'405px':'1200px';
+  const response=await fetch('/frame?t='+t+'&format='+format);
   const svg=await response.text();
   if(mine!==revision)return;
   stage.innerHTML=svg;seek.value=t;
@@ -37,6 +41,7 @@ async function draw(t){
 }
 function pause(){playing=false;button.textContent='Play'}
 button.onclick=()=>{if(playing){pause()}else{if(time>=config.duration)time=0;playing=true;last=performance.now();button.textContent='Pause'}};
+document.querySelector('#format').onchange=()=>draw(time);
 seek.oninput=()=>{pause();time=Number(seek.value);draw(time)};
 async function tick(now){
   if(playing&&!busy){busy=true;time=Math.min(config.duration,time+(now-last)/1000*Number(document.querySelector('#speed').value));last=now;
@@ -68,8 +73,10 @@ def make_handler(timeline_path, *, transparent=False, width=None, height=None):
                 try:
                     t = float(parse_qs(parsed.query).get("t", ["0"])[0])
                     config = load_timeline(timeline_path)
+                    selected_format = parse_qs(parsed.query).get("format", [None])[0]
+                    frame_width, frame_height = FORMATS[selected_format] if selected_format else (config["width"], config["height"])
                     body = render_scene(state_at(config, t), assets=ASSETS,
-                                        width=width or config["width"], height=height or config["height"],
+                                        width=width or frame_width, height=height or frame_height,
                                         transparent=transparent).encode()
                 except (ValueError, KeyError) as error:
                     self.send_error(400, str(error))
