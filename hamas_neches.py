@@ -112,7 +112,6 @@ def _(full_chapters, mo, scene_timelines):
 
 @app.cell
 def _(mo):
-    blocked_meter_y = mo.ui.slider(180, 300, 1, 220, label="Israeli meter Y position", show_value=True, full_width=True)
     potential_position = mo.ui.slider(0, 1, .01, .16, label="Potential needle position", full_width=True)
     potential_opacity = mo.ui.slider(0, 1, .01, .65, label="Potential needle visibility", full_width=True)
     netanyahu_entry = mo.ui.slider(0, 1, .01, 1, label="Netanyahu entrance", full_width=True)
@@ -124,7 +123,6 @@ def _(mo):
     return (
         abbas_entry,
         block_visibility,
-        blocked_meter_y,
         blocked_outcome,
         netanyahu_entry,
         partnership_visibility,
@@ -155,7 +153,6 @@ def _(
     abbas_entry,
     block_visibility,
     blocked_chapters,
-    blocked_meter_y,
     blocked_outcome,
     blocked_time,
     control_mode,
@@ -192,7 +189,7 @@ def _(
         political_position, pal_political_position, isr_meter_y_offset,
         pal_meter_y_offset, pal_translation_progress, far_right_peek_progress,
     ]
-    blocked_controls = [political_position, blocked_meter_y, potential_position, potential_opacity,
+    blocked_controls = [political_position, isr_meter_y_offset, potential_position, potential_opacity,
                         netanyahu_entry, abbas_entry, smotrich_entry, partnership_visibility, block_visibility, blocked_outcome]
     selected_scene = scene_choice.value
     selected_time, selected_chapters = {
@@ -216,7 +213,7 @@ def _(
         else state_at(scene_timelines[selected_scene], selected_time.value)
     )
     if not use_timeline and selected_scene == "blocked":
-        scene_state = dict(scene_state, scene="blocked", israeli_y=blocked_meter_y.value, potential_position=potential_position.value,
+        scene_state = dict(scene_state, scene="blocked", potential_position=potential_position.value,
                            potential_opacity=potential_opacity.value, netanyahu=netanyahu_entry.value,
                            abbas=abbas_entry.value, smotrich=smotrich_entry.value,
                            partnership=partnership_visibility.value, block=block_visibility.value, outcome=blocked_outcome.value)
