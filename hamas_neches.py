@@ -59,7 +59,7 @@ def _(animation_timeline, mo):
 
 @app.cell
 def _(mo):
-    reconciliation_boundary = mo.ui.slider(.1, .45, .01, .25, label="Reconciliation zone ends at", show_value=True, full_width=True)
+    reconciliation_boundary = mo.ui.slider(.1, .45, .01, .2, label="Reconciliation zone ends at", show_value=True, full_width=True)
     right_zone_boundary = mo.ui.slider(.55, .95, .01, .8, label="Right-hand zones start at", show_value=True, full_width=True)
     return reconciliation_boundary, right_zone_boundary
 
