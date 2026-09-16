@@ -31,18 +31,24 @@ def _():
 
 @app.cell
 def _(DEFAULT_TIMELINE, SCENE_FILES, mo):
-    watched_timelines = [
-        mo.watch.file(DEFAULT_TIMELINE.with_name(filename))
-        for filename in (*SCENE_FILES.values(), "sequence.json")
-    ]
-    return (watched_timelines,)
+    # Watchers must be named globals: marimo does not track state inside lists.
+    blocked_timeline_file = mo.watch.file(DEFAULT_TIMELINE.with_name(SCENE_FILES["blocked"]))
+    escalation_timeline_file = mo.watch.file(DEFAULT_TIMELINE.with_name(SCENE_FILES["escalation"]))
+    sequence_file = mo.watch.file(DEFAULT_TIMELINE.with_name("sequence.json"))
+    return blocked_timeline_file, escalation_timeline_file, sequence_file
 
 
 @app.cell
-def _(SCENE_LABELS, load_scene, watched_timelines):
-    # Read the reactive wrappers here so file edits rerun this loading cell.
-    for watched_file in watched_timelines:
-        watched_file.read_text()
+def _(
+    SCENE_LABELS,
+    blocked_timeline_file,
+    escalation_timeline_file,
+    load_scene,
+    sequence_file,
+):
+    blocked_timeline_file.read_text()
+    escalation_timeline_file.read_text()
+    sequence_file.read_text()
     scene_timelines = {name: load_scene(name) for name in SCENE_LABELS.values()}
     return (scene_timelines,)
 
