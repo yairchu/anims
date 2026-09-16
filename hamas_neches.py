@@ -58,6 +58,13 @@ def _(animation_timeline, mo):
 
 
 @app.cell
+def _(mo):
+    reconciliation_boundary = mo.ui.slider(.1, .45, .01, .25, label="Reconciliation zone ends at", show_value=True, full_width=True)
+    right_zone_boundary = mo.ui.slider(.55, .95, .01, .8, label="Right-hand zones start at", show_value=True, full_width=True)
+    return reconciliation_boundary, right_zone_boundary
+
+
+@app.cell
 def _(mo, wigglystuff):
     isr_meter_color_picker = mo.ui.anywidget(wigglystuff.ColorPicker(color="#0056d6"))
     pal_meter_color_picker = mo.ui.anywidget(wigglystuff.ColorPicker(color="#149149"))
@@ -82,13 +89,16 @@ def _(
     pal_political_position,
     pal_translation_progress,
     political_position,
+    reconciliation_boundary,
     render_scene,
+    right_zone_boundary,
     state_at,
     video_format,
 ):
     manual_controls = mo.vstack([
         political_position, pal_political_position, isr_meter_y_offset,
         pal_meter_y_offset, pal_translation_progress, far_right_peek_progress,
+        reconciliation_boundary, right_zone_boundary,
     ])
     active_controls = manual_controls if control_mode.value == "Manual" else animation_time
     scene_state = (
@@ -109,6 +119,8 @@ def _(
         israeli_color=isr_meter_color_picker.value["color"],
         palestinian_color=pal_meter_color_picker.value["color"],
         needle_color=needle_color_picker.value["color"],
+        reconciliation_end=reconciliation_boundary.value,
+        right_zone_start=right_zone_boundary.value,
     )
     # Fit either format on screen while retaining the exact export aspect ratio.
     preview = mo.Html(f'<div style="width:min(100%, {720 * preview_width / preview_height}px);margin:auto">{scene_svg}</div>')
@@ -119,7 +131,8 @@ def _(
     ], justify="start")
     mo.hstack([
         mo.vstack([active_controls, color_controls, mo.md(
-            f"Export this format: `uv run python export_video.py --format {video_format.value}`"
+            f"Export this format: `uv run python export_video.py --format {video_format.value} "
+            f"--reconciliation-end {reconciliation_boundary.value:.2f} --right-zone-start {right_zone_boundary.value:.2f}`"
         )]),
         preview,
     ], widths=[1, 2], align="start", gap=2)

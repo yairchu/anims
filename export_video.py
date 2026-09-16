@@ -23,11 +23,15 @@ def main():
     parser.add_argument("--width", type=int)
     parser.add_argument("--height", type=int)
     parser.add_argument("--fps", type=float)
+    parser.add_argument("--reconciliation-end", type=float, default=.25)
+    parser.add_argument("--right-zone-start", type=float, default=.8)
     parser.add_argument("--start", type=float, default=0)
     parser.add_argument("--end", type=float)
     parser.add_argument("--stills", type=Path, help="Also save chapter frames for visual review")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
+    if not 0 < args.reconciliation_end < args.right_zone_start < 1:
+        parser.error("Zone boundaries must satisfy 0 < reconciliation-end < right-zone-start < 1")
     config = load_timeline(args.timeline)
     preset_width, preset_height = FORMATS[args.format] if args.format else (config["width"], config["height"])
     width = args.width if args.width is not None else preset_width
@@ -54,7 +58,8 @@ def main():
 
         def draw(time):
             svg = render_scene(state_at(config, time), width=width,
-                               height=height, transparent=args.transparent)
+                               height=height, transparent=args.transparent,
+                               reconciliation_end=args.reconciliation_end, right_zone_start=args.right_zone_start)
             return rasterize(svg)
 
         if args.stills:
@@ -95,6 +100,7 @@ def main():
         (args.output.with_suffix(args.output.suffix + ".json")).write_text(json.dumps({
             "timeline": config, "width": width, "height": height, "fps": fps,
             "start": args.start, "end": end, "frames": frames, "transparent": args.transparent,
+            "reconciliation_end": args.reconciliation_end, "right_zone_start": args.right_zone_start,
         }, indent=2))
         print(f"Saved {args.output.resolve()} ({frames} frames)")
 

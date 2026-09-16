@@ -59,6 +59,14 @@ Add `--stills output/stills` for chapter screenshots, or `--overwrite` to replac
 
 The alpha export removes the scene background, but deliberately preserves backgrounds inside the individual image assets (such as the portrait's cream circle). No narration, soundtrack, or captions are baked in.
 
+## Shaded zones
+
+Both meters have a green reconciliation zone (leftmost 25%) and an amber right-hand zone (rightmost 20%). Labels are **פתח לפיוס** on both left ends, **חלון לסיפוח** on the Israeli right, and **סכנת הסלמה** on the Palestinian right. Palestinian zone labels translate from Arabic along with the main labels.
+
+A left wedge brightens when its needle enters. When both visible meters enter, both brighten further and a soft green connection appears between them. Amber shading increases as each needle advances into its right zone.
+
+Manual mode exposes boundary sliders; their settings also apply when you switch to Timeline. The displayed export command includes them. CLI equivalents: `--reconciliation-end 0.25 --right-zone-start 0.8`. These are illustrative thresholds, not measured political probabilities.
+
 ## Edit timing and motion
 
 `timeline.json` contains:

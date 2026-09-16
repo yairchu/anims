@@ -5,6 +5,17 @@ import math
 from functools import lru_cache
 from pathlib import Path
 
+def meter_point(position, radius=240):
+    angle = math.radians(-50 + 100 * position)
+    return 300 + radius * math.sin(angle), 340 - radius * math.cos(angle)
+
+
+def zone_wedge(start, end):
+    x0, y0 = meter_point(start)
+    x1, y1 = meter_point(end)
+    return f"M300 340 L{x0:.3f} {y0:.3f} A240 240 0 0 1 {x1:.3f} {y1:.3f} Z"
+
+
 def render_meter(
     *,
     meter_id,
@@ -18,6 +29,11 @@ def render_meter(
     logos=(),
     translated_labels=None,
     translation_progress=0,
+    reconciliation_end=.25,
+    right_zone_start=.8,
+    mutual_reconciliation=False,
+    zone_labels=(("פתח", "לפיוס"), ("חלון", "לסיפוח")),
+    translated_zone_labels=None,
 ):
     # Mirror only the geometry so the labels and logos stay upright.
     geometry_transform = (
@@ -34,6 +50,9 @@ def render_meter(
             for x, lines in zip((60, 540), texts)
             for line, text in enumerate(lines)
         )
+        return render_text_layer(text_svg, opacity, blur, layer)
+
+    def render_text_layer(text_svg, opacity, blur=0, layer="original"):
         if blur == 0:
             return f'<g opacity="{opacity}">{text_svg}</g>'
         filter_id = f"{meter_id}-{layer}-blur"
@@ -57,6 +76,37 @@ def render_meter(
             blur=8 * (1 - blend),
             layer="translation",
         )
+    # Wedges share the needle's pivot and exact 100-degree sweep.
+    left_active = position <= reconciliation_end
+    right_depth = max(0, min(1, (position-right_zone_start)/(1-right_zone_start)))
+    left_opacity = .32 if mutual_reconciliation else (.23 if left_active else .10)
+    right_opacity = .10 + .25 * right_depth
+    zones_svg = (
+        f'<path data-zone="reconciliation" d="{zone_wedge(0, reconciliation_end)}" '
+        f'fill="#55b98b" fill-opacity="{left_opacity}"/>'
+        f'<path data-zone="right" d="{zone_wedge(right_zone_start, 1)}" '
+        f'fill="#e5a044" fill-opacity="{right_opacity}"/>'
+    )
+
+    def render_zone_labels(texts):
+        parts = []
+        for center, lines, color in zip(
+            (reconciliation_end/2, (right_zone_start+1)/2), texts, ("#277351", "#955c18")
+        ):
+            x, y = meter_point(center, radius=178)
+            if upside_down:
+                y = 400-y
+            parts.extend(
+                f'<text x="{x:.3f}" y="{y + 17*(line-(len(lines)-1)/2):.3f}" fill="{color}">{html.escape(text)}</text>'
+                for line, text in enumerate(lines)
+            )
+        return "".join(parts)
+
+    zone_text = render_text_layer(render_zone_labels(zone_labels), 1)
+    if translated_zone_labels is not None:
+        zone_text = render_text_layer(render_zone_labels(zone_labels), 1-blend, 8*blend, "zones-original")
+        zone_text += render_text_layer(render_zone_labels(translated_zone_labels), blend, 8*(1-blend), "zones-translation")
+
     logo_y = 46 if upside_down else 274
     logo_svg = "".join(
         f'<image href="{html.escape(uri, quote=True)}" x="{x}" y="{logo_y}" '
@@ -66,6 +116,7 @@ def render_meter(
     return f'''<g id="{meter_id}" transform="translate(0 {y_offset})"
                    role="img" aria-label="{html.escape(title, quote=True)}">
       <g transform="{geometry_transform}">
+        {zones_svg}
         <path d="M 116.149 185.731 A 240 240 0 0 1 483.851 185.731"
               fill="none" stroke="{color}" stroke-width="10" stroke-linecap="round" />
         <g transform="rotate({needle_angle} 300 340)">
@@ -76,6 +127,8 @@ def render_meter(
       </g>
       <g fill="black" font-size="26" font-family="Arial, sans-serif"
          text-anchor="middle" direction="rtl">{label_svg}</g>
+      <g font-size="16" font-family="Arial, sans-serif" text-anchor="middle" direction="rtl"
+         stroke="white" stroke-width="2" stroke-opacity=".8" paint-order="stroke">{zone_text}</g>
       {logo_svg}
     </g>'''
 
@@ -138,8 +191,16 @@ def render_events(state):
 
 
 def render_scene(state, *, assets=None, width=1080, height=1920, transparent=False,
-                 israeli_color="#0056d6", palestinian_color="#149149", needle_color="#7a7a7a"):
+                 israeli_color="#0056d6", palestinian_color="#149149", needle_color="#7a7a7a",
+                 reconciliation_end=.25, right_zone_start=.8):
+    if not 0 < reconciliation_end < right_zone_start < 1:
+        raise ValueError("Zone boundaries must satisfy 0 < left < right < 1")
     assets = embedded_assets() if assets is None else assets
+    mutual = (state["israeli_position"] <= reconciliation_end
+              and state["palestinian_position"] <= reconciliation_end
+              and state["palestinian_y"] >= 0)
+    zone_options = dict(reconciliation_end=reconciliation_end, right_zone_start=right_zone_start,
+                        mutual_reconciliation=mutual)
     # The drawing has a stable coordinate space; changing output size never changes motion.
     view_width = max(720, 720 * width / height)
     view_height = view_width * height / width
@@ -159,11 +220,21 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
         y_offset=pal_y, upside_down=True,
         labels=(("الحقوق", "للجميع"), ("فلسطين", "للمسلمين", "فقط")),
         translated_labels=(("לכולם", "מגיע", "זכויות"), ("פלסטין", "למוסלמים", "בלבד")),
-        translation_progress=state["translation"], logos=(assets["cfp"], assets["hamas"]))
+        translation_progress=state["translation"], logos=(assets["cfp"], assets["hamas"]),
+        zone_labels=(("فرصة", "للمصالحة"), ("خطر", "التصعيد")),
+        translated_zone_labels=(("פתח", "לפיוס"), ("סכנת", "הסלמה")), **zone_options)
     isr = render_meter(meter_id="israeli", title="Israeli political meter", color=israeli_color,
         needle_color=needle_color, position=state["israeli_position"], y_offset=state["israeli_y"],
         labels=(("לכולם", "מגיע", "זכויות"), ("ישראל", "ליהודים", "בלבד")),
-        logos=(assets["vegan"], assets["kach"]))
+        logos=(assets["vegan"], assets["kach"]), **zone_options)
+    connection = ""
+    if mutual:
+        x0, y0 = meter_point(reconciliation_end/2)
+        y_top = pal_y + 400-y0
+        y_bottom = state["israeli_y"] + y0
+        connection = f'''<path id="reconciliation-connection"
+          d="M{x0:.3f} {y_top:.3f} C{x0-55:.3f} {y_top+40:.3f}, {x0-55:.3f} {y_bottom-40:.3f}, {x0:.3f} {y_bottom:.3f}"
+          fill="none" stroke="#55b98b" stroke-width="12" stroke-opacity=".25" stroke-linecap="round"/>'''
     # A neutral visual highlight of the outcome, without inventing dialogue or motive.
     outcome = f'''<g opacity="{state['outcome']}" fill="none" stroke="{israeli_color}" stroke-width="3">
       <circle cx="300" cy="{state['israeli_y']+340}" r="20"/>
@@ -171,5 +242,5 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"
         viewBox="{view_x} {view_y} {view_width} {view_height}" style="max-width:100%;height:auto;overflow:hidden"
         role="img" aria-label="Political spectrum animation">
-      {background}{portrait}{pal}{isr}{render_events(state)}{outcome}
+      {background}{portrait}{connection}{pal}{isr}{render_events(state)}{outcome}
     </svg>'''

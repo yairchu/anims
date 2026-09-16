@@ -70,6 +70,28 @@ class TimelineTests(unittest.TestCase):
             pal_y = float(pal.attrib["transform"].split()[1].rstrip(')'))
             self.assertLess(pal_y+305, y)
 
+    def test_reconciliation_requires_both_visible_meters(self):
+        assets = {name: filename for name, filename in ASSET_FILES.items()}
+        state = state_at(self.timeline, 23)
+        state.update(israeli_position=.1, palestinian_position=.1)
+        self.assertIn('id="reconciliation-connection"', render_scene(state, assets=assets))
+        state['palestinian_position'] = .5
+        self.assertNotIn('id="reconciliation-connection"', render_scene(state, assets=assets))
+        state.update(palestinian_position=.1, palestinian_y=-400)
+        self.assertNotIn('id="reconciliation-connection"', render_scene(state, assets=assets))
+
+    def test_zone_boundaries_and_right_intensity(self):
+        assets = {name: filename for name, filename in ASSET_FILES.items()}
+        state = state_at(self.timeline, 23)
+        with self.assertRaises(ValueError):
+            render_scene(state, assets=assets, reconciliation_end=.9, right_zone_start=.8)
+        ns = {'svg': 'http://www.w3.org/2000/svg'}
+        def right_opacity(position):
+            state['israeli_position'] = position
+            root = ET.fromstring(render_scene(state, assets=assets))
+            return float(root.find("svg:g[@id='israeli']/svg:g/svg:path[@data-zone='right']", ns).attrib['fill-opacity'])
+        self.assertLess(right_opacity(.8), right_opacity(1))
+
     def test_alpha_export_omits_only_background(self):
         assets = {name: filename for name, filename in ASSET_FILES.items()}
         state = state_at(self.timeline, 14)
