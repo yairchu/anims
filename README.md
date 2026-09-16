@@ -27,7 +27,7 @@ For playback, speed controls, scrubbing, and chapter jumps:
 uv run python animation_preview.py
 ```
 
-Open http://127.0.0.1:8765. This server listens only on localhost. Reload after changing a timeline or `sequence.json`. It requires permission to bind a local port. Browser preview and native export share SVG artwork; very small differences in font/filter rendering are possible.
+Open http://127.0.0.1:8765. This server listens only on localhost. The playback server reads timeline files on each request; reload its page after changing durations or chapter markers. It requires permission to bind a local port. Browser preview and native export share SVG artwork; very small differences in font/filter rendering are possible.
 
 ## Export
 
@@ -72,6 +72,8 @@ Manual mode exposes boundary sliders; their settings also apply when you switch 
 Choose **Blocked partnership** (12 seconds), **Escalation** (the existing 25-second animation), or **Full sequence** (38.5 seconds including a 1.5-second transition). The scene dropdown is available in both the notebook and the playback preview. Each selection remembers its scrub position. Chapter navigation jumps to a beat; switching scenes does not reset manual sliders. Full sequence always uses timeline controls.
 
 The blocked-partnership scene introduces Netanyahu and Mansur Abbas, draws a possible partnership, and moves a dashed green *potential* needle left. Smotrich enters, the partnership is crossed out, and the possibility fades. The actual needle stays at its original position throughout. The Palestinian meter is absent in this introduction. Manual controls let you adjust the actors, partnership, blocking mark, potential needle, and final caption independently.
+
+The notebook watches all three JSON files with `mo.watch.file`: saving edits automatically reloads the animation data (with automatic cell execution enabled), without restarting.
 
 - `timeline_blocked.json`: introduction timing and motion, including the seven additional actor/possibility tracks.
 - `timeline.json`: existing escalation scene, kept independently editable.

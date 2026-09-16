@@ -10,22 +10,41 @@ def _():
     import marimo as mo
     import wigglystuff
     from animation_scene import render_scene
-    from animation_timeline import SCENE_LABELS, ease, load_scene, state_at
+    from animation_timeline import DEFAULT_TIMELINE, SCENE_FILES, SCENE_LABELS, ease, load_scene, state_at
     from video_formats import FORMATS, FORMAT_LABELS
 
-    scene_timelines = {name: load_scene(name) for name in SCENE_LABELS.values()}
     return (
+        DEFAULT_TIMELINE,
         FORMATS,
         FORMAT_LABELS,
+        SCENE_FILES,
         SCENE_LABELS,
         ease,
+        load_scene,
         mo,
         render_scene,
-        scene_timelines,
         shlex,
         state_at,
         wigglystuff,
     )
+
+
+@app.cell
+def _(DEFAULT_TIMELINE, SCENE_FILES, mo):
+    watched_timelines = [
+        mo.watch.file(DEFAULT_TIMELINE.with_name(filename))
+        for filename in (*SCENE_FILES.values(), "sequence.json")
+    ]
+    return (watched_timelines,)
+
+
+@app.cell
+def _(SCENE_LABELS, load_scene, watched_timelines):
+    # Read the reactive wrappers here so file edits rerun this loading cell.
+    for watched_file in watched_timelines:
+        watched_file.read_text()
+    scene_timelines = {name: load_scene(name) for name in SCENE_LABELS.values()}
+    return (scene_timelines,)
 
 
 @app.cell
