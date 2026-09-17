@@ -1,6 +1,6 @@
 # Political spectrum animation
 
-The notebook has one preview with **Scene**, **Manual / Timeline**, and **Video format** controls. It opens on the blocked-partnership timeline. Both modes use the same scene renderer as export.
+The notebook has one preview with **Scene**, **Manual / Timeline**, and **Video format** controls. It opens on the blocked-partnership timeline. Both modes use the same scene renderer as export. In a live notebook, SVG frames refer to images served by marimo rather than embedding their bytes. An independent asset-loading cell keeps the URLs alive across scrubbing; rerun that cell after replacing portraits. Script/static exports retain marimo’s portable data-URL fallback.
 
 ## Setup
 
@@ -79,7 +79,7 @@ The notebook watches all three JSON files with `mo.watch.file`: saving edits aut
 - `timeline.json`: existing escalation scene, kept independently editable.
 - `sequence.json`: scene order and the transition title/duration. Fade timing at joins is 0.4 seconds; standalone timelines have no join fades.
 
-The introduction currently uses named silhouette cards. To use portraits, place transparent PNGs named `netanyahu.png`, `abbas.png`, and `smotrich.png` beside `animation_scene.py`. Each is optional: missing portraits keep their silhouette. Artwork fits inside a 110×110 box with the name beneath it; use consistently cropped busts with a little transparent padding. Newly added or replaced images appear on the next render. The existing combined portrait remains in the escalation scene.
+The introduction uses the portraits `netanyahu.png`, `mansur_abbas.png`, and `smotrich.png` beside `animation_scene.py`, with transparent outer backgrounds and their cream circular backdrops preserved. Each is optional: missing portraits keep their silhouette. Artwork fits inside a 110×110 box with the name beneath it; use consistently cropped busts with a little transparent padding. Newly added or replaced images appear on the next render. The existing combined portrait remains in the escalation scene.
 
 Export either scene or the complete sequence:
 

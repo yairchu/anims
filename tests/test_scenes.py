@@ -97,7 +97,7 @@ class SceneTests(unittest.TestCase):
     def test_new_portrait_is_available_to_preview_and_embedding(self):
         from animation_scene import available_asset_files
         with patch('animation_scene.Path.is_file', return_value=True):
-            self.assertEqual(available_asset_files()['abbas'], 'abbas.png')
+            self.assertEqual(available_asset_files()['abbas'], 'mansur_abbas.png')
         with patch('animation_scene.Path.is_file', return_value=False):
             self.assertNotIn('abbas', available_asset_files())
 

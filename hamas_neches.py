@@ -9,7 +9,7 @@ def _():
     import shlex
     import marimo as mo
     import wigglystuff
-    from animation_scene import render_scene
+    from animation_scene import notebook_asset_urls, render_scene
     from animation_timeline import DEFAULT_TIMELINE, SCENE_FILES, SCENE_LABELS, ease, load_scene, state_at
     from video_formats import FORMATS, FORMAT_LABELS
 
@@ -22,11 +22,19 @@ def _():
         ease,
         load_scene,
         mo,
+        notebook_asset_urls,
         render_scene,
         shlex,
         state_at,
         wigglystuff,
     )
+
+
+@app.cell
+def _(notebook_asset_urls):
+    # Keep virtual files alive independently of timeline scrubbing and controls.
+    preview_assets = notebook_asset_urls()
+    return (preview_assets,)
 
 
 @app.cell
@@ -202,6 +210,7 @@ def _(
     potential_position,
     reconciliation_boundary,
     render_scene,
+    preview_assets,
     right_zone_boundary,
     scene_choice,
     scene_timelines,
@@ -244,7 +253,8 @@ def _(
                            partnership=partnership_visibility.value, block=block_visibility.value, outcome=blocked_outcome.value)
     preview_width, preview_height = FORMATS[video_format.value]
     scene_svg = render_scene(
-        scene_state, width=preview_width, height=preview_height,
+        scene_state,
+        assets=preview_assets, width=preview_width, height=preview_height,
         israeli_color=isr_meter_color_picker.value["color"],
         palestinian_color=pal_meter_color_picker.value["color"],
         needle_color=needle_color_picker.value["color"],

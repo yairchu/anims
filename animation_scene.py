@@ -172,12 +172,25 @@ ASSET_FILES = {
 }
 
 
-ACTOR_FILES = {name: f"{name}.png" for name in ("netanyahu", "abbas", "smotrich")}
+ACTOR_FILES = {"netanyahu": "netanyahu.png", "abbas": "mansur_abbas.png", "smotrich": "smotrich.png"}
 
 
 def available_asset_files():
     return ASSET_FILES | {name: filename for name, filename in ACTOR_FILES.items()
                           if Path(__file__).with_name(filename).is_file()}
+
+
+def notebook_asset_urls():
+    """Serve assets through marimo's file endpoint, once per asset-loading cell.
+
+    This is the same virtual-file helper used by mo.image. In script/static
+    export contexts marimo falls back to data URLs, keeping those portable.
+    """
+    from marimo._output.data import data as mo_data
+
+    return {name: mo_data.image(Path(__file__).with_name(filename).read_bytes(),
+                                ext=Path(filename).suffix).url
+            for name, filename in available_asset_files().items()}
 
 
 def embedded_assets():
