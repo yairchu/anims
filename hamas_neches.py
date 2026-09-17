@@ -322,7 +322,7 @@ def _(mo):
     right_reveal = mo.ui.slider(0, 1, .01, 1, label="Right label reveal", full_width=True)
     arc_reveal = mo.ui.slider(0, 1, .01, 1, label="Arc drawing reveal", full_width=True)
     needle_reveal = mo.ui.slider(0, 1, .01, 1, label="Needle reveal", full_width=True)
-    logos_reveal = mo.ui.slider(0, 1, .01, 0, label="Logos reveal", full_width=True)
+    logos_reveal = mo.ui.slider(0, 1, .01, 1, label="Logos reveal", full_width=True)
     zones_reveal = mo.ui.slider(0, 1, .01, 0, label="Opportunity zones reveal", full_width=True)
     return (
         arc_reveal,

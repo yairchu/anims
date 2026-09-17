@@ -148,7 +148,7 @@ def render_meter(
             <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="{color}" flood-opacity="{glow:.6f}"/>
           </filter>
         </defs>
-        <g data-icon-zone="{'reconciliation' if index == 0 else 'right'}" data-scale="{scale:.6f}" opacity="{logos_reveal}"
+        <g data-icon-zone="{'reconciliation' if index == 0 else 'right'}" data-scale="{scale:.6f}" opacity="{logos_reveal * (left_reveal, right_reveal)[index]}"
            transform="translate({center_x} {center_y}) scale({scale:.6f}) translate({-center_x} {-center_y})">
           <image href="{html.escape(uri, quote=True)}" x="{center_x-40}" y="{logo_y}"
                  width="80" height="80" filter="url(#{filter_id})"/>

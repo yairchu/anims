@@ -18,7 +18,12 @@ class IntroductionTests(unittest.TestCase):
             state = state_at(self.intro, time)
             self.assertEqual(tuple(state[key] for key in
                                    ('right_reveal', 'left_reveal', 'arc_reveal', 'needle_reveal')), expected)
-            self.assertEqual(state['logos_reveal'], 0)
+            self.assertEqual(state['logos_reveal'], 1)
+            root = ET.fromstring(render_scene(state, assets=ASSET_FILES))
+            ns = {'s': 'http://www.w3.org/2000/svg'}
+            for zone, opacity in [('right', expected[0]), ('reconciliation', expected[1])]:
+                logo = root.find(f".//s:g[@data-icon-zone='{zone}']", ns)
+                self.assertEqual(float(logo.attrib['opacity']), opacity)
             self.assertEqual(state['zones_reveal'], 0)
         self.assertAlmostEqual(state_at(self.intro, 9)['arc_reveal'], .5)
 
@@ -37,7 +42,7 @@ class IntroductionTests(unittest.TestCase):
                 self.assertIsNotNone(meter)
                 meters.append(ET.tostring(meter))
             self.assertEqual(*meters)
-        self.assertEqual(after['logos_reveal'], 0)
+        self.assertEqual(after['logos_reveal'], 1)
         self.assertEqual(state_at(self.full, 15)['logos_reveal'], 1)
 
     def test_intro_artwork_has_no_actors_or_second_meter(self):

@@ -101,13 +101,13 @@ The opening contains no actors or Palestinian meter. Its first cut leaves space 
 | Seconds | Reveal |
 | --- | --- |
 | 0–2 | Empty frame for the opening question |
-| 2–3 | Right endpoint label fades in |
-| 5–6 | Left endpoint label fades in |
+| 2–3 | Right endpoint label and Kach logo fade in |
+| 5–6 | Left endpoint label and Vegan Friendly logo fade in |
 | 8–10 | Arc draws from right to left, joining the positions |
 | 11–12 | Needle fades in |
 | 12–14 | Hold on the completed meter |
 
-Edit `right_reveal`, `left_reveal`, `arc_reveal`, and `needle_reveal` in `timeline_intro.json`. Values run from 0 (hidden) to 1 (complete). `logos_reveal` and `zones_reveal` stay at 0 in this scene and fade in during the first second of `timeline_blocked.json`. These tracks are optional in other standalone timelines and default to fully visible. Manual introduction controls expose the same reveals and reuse the existing needle-position and meter-Y sliders.
+Edit `right_reveal`, `left_reveal`, `arc_reveal`, and `needle_reveal` in `timeline_intro.json`. Values run from 0 (hidden) to 1 (complete). Each logo follows its endpoint’s reveal, multiplied by `logos_reveal` (default 1). Both remain visible through the handoff. `zones_reveal` stays at 0 in this scene and fades in during the first second of `timeline_blocked.json`. These tracks are optional in other standalone timelines and default to fully visible. Manual introduction controls expose the same reveals and reuse the existing needle-position and meter-Y sliders.
 
 The endpoint text stays consistent with the following scenes: the left label says “everyone deserves rights.” No narration is baked in. At the continuous join, keep the introduction’s final meter position/Y aligned with the partnership’s initial values if you edit them.
 
