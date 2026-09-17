@@ -12,7 +12,7 @@ class IntroductionTests(unittest.TestCase):
         self.full = load_scene('full')
 
     def test_reveals_follow_narration(self):
-        stages = [(0, (0, 0, 0, 0)), (4, (1, 0, 0, 0)),
+        stages = [(0, (0, 0, 0, 0)), (4, (0, 1, 0, 0)),
                   (7, (1, 1, 0, 0)), (10, (1, 1, 1, 0)), (13, (1, 1, 1, 1))]
         for time, expected in stages:
             state = state_at(self.intro, time)

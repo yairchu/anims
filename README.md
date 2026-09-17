@@ -101,8 +101,8 @@ The opening contains no actors or Palestinian meter. Its first cut leaves space 
 | Seconds | Reveal |
 | --- | --- |
 | 0–2 | Empty frame for the opening question |
-| 2–3 | Right endpoint label and Kach logo fade in |
-| 5–6 | Left endpoint label and Vegan Friendly logo fade in |
+| 2–3 | Left endpoint label and Vegan Friendly logo fade in |
+| 5–6 | Right endpoint label and Kach logo fade in |
 | 8–10 | Arc draws from right to left, joining the positions |
 | 11–12 | Needle fades in |
 | 12–14 | Hold on the completed meter |
