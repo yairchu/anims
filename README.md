@@ -1,6 +1,6 @@
 # Political spectrum animation
 
-The notebook has one preview with **Scene**, **Manual / Timeline**, and **Video format** controls. It opens on the blocked-partnership timeline. Both modes use the same scene renderer as export. In a live notebook, SVG frames refer to images served by marimo rather than embedding their bytes. An independent asset-loading cell keeps the URLs alive across scrubbing; rerun that cell after replacing portraits. Script/static exports retain marimo’s portable data-URL fallback.
+The notebook has one preview with **Scene**, **Manual / Timeline**, and **Video format** controls. It opens on the meter-introduction timeline. Both modes use the same scene renderer as export. In a live notebook, SVG frames refer to images served by marimo rather than embedding their bytes. An independent asset-loading cell keeps the URLs alive across scrubbing; rerun that cell after replacing portraits. Script/static exports retain marimo’s portable data-URL fallback.
 
 ## Setup
 
@@ -69,15 +69,16 @@ Manual mode exposes boundary sliders; their settings also apply when you switch 
 
 ## Scenes and the full sequence
 
-Choose **Blocked partnership** (12 seconds), **Escalation** (the existing 25-second animation), or **Full sequence** (38.5 seconds including a 1.5-second transition). The scene dropdown is available in both the notebook and the playback preview. Each selection remembers its scrub position. Chapter navigation jumps to a beat; switching scenes does not reset manual sliders. Full sequence always uses timeline controls.
+Choose **Meter introduction** (14 seconds), **Blocked partnership** (12 seconds), **Escalation** (25 seconds), or **Full sequence** (52.5 seconds including the later 1.5-second transition). The scene dropdown is available in both the notebook and the playback preview. Each selection remembers its scrub position. Chapter navigation jumps to a beat; switching scenes does not reset manual sliders. Full sequence always uses timeline controls.
 
 The blocked-partnership scene introduces Netanyahu and Mansur Abbas, draws a possible partnership, and moves a dashed green *potential* needle left. Smotrich enters, the partnership is crossed out, and the possibility fades. The actual needle stays at its original position throughout. The Palestinian meter is absent in this introduction. Manual controls let you adjust the actors, partnership, blocking mark, potential needle, and final caption independently.
 
-The notebook watches all three JSON files with `mo.watch.file`: saving edits automatically reloads the animation data (with automatic cell execution enabled), without restarting.
+The notebook watches all four JSON files with `mo.watch.file`: saving edits automatically reloads the animation data (with automatic cell execution enabled), without restarting.
 
-- `timeline_blocked.json`: introduction timing and motion, including the seven additional actor/possibility tracks.
+- `timeline_intro.json`: piece-by-piece meter reveal timing.
+- `timeline_blocked.json`: partnership timing and motion, including the seven additional actor/possibility tracks.
 - `timeline.json`: existing escalation scene, kept independently editable.
-- `sequence.json`: scene order and the transition title/duration. Fade timing at joins is 0.4 seconds; standalone timelines have no join fades.
+- `sequence.json`: scene order and the transition title/duration. `continuous_joins` keeps the introduction → partnership handoff uninterrupted. Other joins use a transition card with 0.4-second fades.
 
 The introduction uses the portraits `netanyahu.png`, `mansur_abbas.png`, and `smotrich.png` beside `animation_scene.py`, with transparent outer backgrounds and their cream circular backdrops preserved. Each is optional: missing portraits keep their silhouette. Artwork fits inside a 110×110 box with the name beneath it; use consistently cropped busts with a little transparent padding. Newly added or replaced images appear on the next render. The existing combined portrait remains in the escalation scene.
 
@@ -89,9 +90,30 @@ uv run python export_video.py --scene escalation --output output/escalation.mp4
 uv run python export_video.py --scene full --format portrait --output output/full.mp4
 ```
 
-`--scene` and `--timeline` are alternatives; `--timeline path.json` loads a custom standalone scene. For compatibility, export without either option still selects escalation. The browser preview starts with the introduction; use `--scene full` to start on the full sequence. Export sidecars include all resolved timelines and transition settings. Manual sliders are for visual experiments and do not write timeline keyframes; export renders the selected timeline.
+`--scene` and `--timeline` are alternatives; `--timeline path.json` loads a custom standalone scene. For compatibility, export without either option still selects escalation. The browser preview starts with the meter introduction; use `--scene full` to start on the full sequence. Export sidecars include all resolved timelines and transition settings. Manual sliders are for visual experiments and do not write timeline keyframes; export renders the selected timeline.
 
 Colors can also be set with `--israeli-color '#0056d6' --palestinian-color '#149149' --needle-color '#7a7a7a'`.
+
+### Meter introduction
+
+The opening contains no actors or Palestinian meter. Its first cut leaves space for narration:
+
+| Seconds | Reveal |
+| --- | --- |
+| 0–2 | Empty frame for the opening question |
+| 2–3 | Right endpoint label fades in |
+| 5–6 | Left endpoint label fades in |
+| 8–10 | Arc draws from right to left, joining the positions |
+| 11–12 | Needle fades in |
+| 12–14 | Hold on the completed meter |
+
+Edit `right_reveal`, `left_reveal`, `arc_reveal`, and `needle_reveal` in `timeline_intro.json`. Values run from 0 (hidden) to 1 (complete). `logos_reveal` and `zones_reveal` stay at 0 in this scene and fade in during the first second of `timeline_blocked.json`. These tracks are optional in other standalone timelines and default to fully visible. Manual introduction controls expose the same reveals and reuse the existing needle-position and meter-Y sliders.
+
+The endpoint text stays consistent with the following scenes: the left label says “everyone deserves rights.” No narration is baked in. At the continuous join, keep the introduction’s final meter position/Y aligned with the partnership’s initial values if you edit them.
+
+```sh
+uv run python export_video.py --scene intro --output output/meter-introduction.mp4
+```
 
 ## Edit timing and motion
 

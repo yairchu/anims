@@ -46,6 +46,7 @@ def _(notebook_asset_urls):
 
 @app.cell
 def _(DEFAULT_TIMELINE, SCENE_FILES, mo):
+    intro_timeline_file = mo.watch.file(DEFAULT_TIMELINE.with_name(SCENE_FILES["intro"]))
     # Watchers must be named globals: marimo does not track state inside lists.
     blocked_timeline_file = mo.watch.file(
         DEFAULT_TIMELINE.with_name(SCENE_FILES["blocked"])
@@ -54,7 +55,12 @@ def _(DEFAULT_TIMELINE, SCENE_FILES, mo):
         DEFAULT_TIMELINE.with_name(SCENE_FILES["escalation"])
     )
     sequence_file = mo.watch.file(DEFAULT_TIMELINE.with_name("sequence.json"))
-    return blocked_timeline_file, escalation_timeline_file, sequence_file
+    return (
+        blocked_timeline_file,
+        escalation_timeline_file,
+        intro_timeline_file,
+        sequence_file,
+    )
 
 
 @app.cell
@@ -62,9 +68,11 @@ def _(
     SCENE_LABELS,
     blocked_timeline_file,
     escalation_timeline_file,
+    intro_timeline_file,
     load_scene,
     sequence_file,
 ):
+    intro_timeline_file.read_text()
     blocked_timeline_file.read_text()
     escalation_timeline_file.read_text()
     sequence_file.read_text()
@@ -78,7 +86,7 @@ def _(
 def _(FORMAT_LABELS, SCENE_LABELS, mo):
     scene_choice = mo.ui.dropdown(
         SCENE_LABELS,
-        value="Blocked partnership",
+        value="Meter introduction",
         label="Scene",
         allow_select_none=False,
     )
@@ -158,6 +166,43 @@ def _(mo):
         pal_translation_progress,
         political_position,
     )
+
+
+@app.cell
+def _(mo, scene_timelines):
+    intro_chapters = mo.ui.dropdown(
+        {
+            f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
+            for chapter in scene_timelines["intro"]["chapters"]
+        },
+        value=next(
+            iter(
+                {
+                    f"{chapter['time']:g}s · {chapter['label']}": chapter[
+                        "time"
+                    ]
+                    for chapter in scene_timelines["intro"]["chapters"]
+                }
+            )
+        ),
+        label="Jump to chapter",
+        allow_select_none=False,
+    )
+    return (intro_chapters,)
+
+
+@app.cell
+def _(intro_chapters, mo, scene_timelines):
+    intro_time = mo.ui.slider(
+        0,
+        scene_timelines["intro"]["duration"],
+        0.01,
+        intro_chapters.value,
+        label="Animation time (seconds)",
+        show_value=True,
+        full_width=True,
+    )
+    return (intro_time,)
 
 
 @app.cell
@@ -273,6 +318,24 @@ def _(full_chapters, mo, scene_timelines):
 
 @app.cell
 def _(mo):
+    left_reveal = mo.ui.slider(0, 1, .01, 1, label="Left label reveal", full_width=True)
+    right_reveal = mo.ui.slider(0, 1, .01, 1, label="Right label reveal", full_width=True)
+    arc_reveal = mo.ui.slider(0, 1, .01, 1, label="Arc drawing reveal", full_width=True)
+    needle_reveal = mo.ui.slider(0, 1, .01, 1, label="Needle reveal", full_width=True)
+    logos_reveal = mo.ui.slider(0, 1, .01, 0, label="Logos reveal", full_width=True)
+    zones_reveal = mo.ui.slider(0, 1, .01, 0, label="Opportunity zones reveal", full_width=True)
+    return (
+        arc_reveal,
+        left_reveal,
+        logos_reveal,
+        needle_reveal,
+        right_reveal,
+        zones_reveal,
+    )
+
+
+@app.cell
+def _(mo):
     potential_position = mo.ui.slider(
         0, 1, 0.01, 0.3, label="Potential needle position", full_width=True
     )
@@ -350,6 +413,7 @@ def _(mo, wigglystuff):
 def _(
     FORMATS,
     abbas_entry,
+    arc_reveal,
     block_visibility,
     blocked_chapters,
     blocked_outcome,
@@ -361,10 +425,15 @@ def _(
     far_right_peek_progress,
     full_chapters,
     full_time,
+    intro_chapters,
+    intro_time,
     isr_meter_color_picker,
     isr_meter_y_offset,
+    left_reveal,
+    logos_reveal,
     mo,
     needle_color_picker,
+    needle_reveal,
     netanyahu_entry,
     pal_meter_color_picker,
     pal_meter_y_offset,
@@ -377,6 +446,7 @@ def _(
     preview_assets,
     reconciliation_boundary,
     render_scene,
+    right_reveal,
     right_zone_boundary,
     scene_choice,
     scene_timelines,
@@ -384,7 +454,9 @@ def _(
     smotrich_entry,
     state_at,
     video_format,
+    zones_reveal,
 ):
+    intro_controls = [political_position, isr_meter_y_offset, left_reveal, right_reveal, arc_reveal, needle_reveal, logos_reveal, zones_reveal]
     escalation_controls = [
         political_position,
         pal_political_position,
@@ -407,6 +479,7 @@ def _(
     ]
     selected_scene = scene_choice.value
     selected_time, selected_chapters = {
+        "intro": (intro_time, intro_chapters),
         "blocked": (blocked_time, blocked_chapters),
         "escalation": (escalation_time, escalation_chapters),
         "full": (full_time, full_chapters),
@@ -416,9 +489,8 @@ def _(
         mo.vstack([selected_chapters, selected_time])
         if use_timeline
         else mo.vstack(
-            blocked_controls
-            if selected_scene == "blocked"
-            else escalation_controls
+            intro_controls if selected_scene == "intro" else
+            blocked_controls if selected_scene == "blocked" else escalation_controls
         )
     )
     scene_state = (
@@ -448,6 +520,8 @@ def _(
             block=block_visibility.value,
             outcome=blocked_outcome.value,
         )
+    if not use_timeline and selected_scene == "intro":
+        scene_state = dict(scene_state, scene="intro", left_reveal=left_reveal.value, right_reveal=right_reveal.value, arc_reveal=arc_reveal.value, needle_reveal=needle_reveal.value, logos_reveal=logos_reveal.value, zones_reveal=zones_reveal.value)
     preview_width, preview_height = FORMATS[video_format.value]
     scene_svg = render_scene(
         scene_state,

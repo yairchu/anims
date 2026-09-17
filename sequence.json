@@ -1,10 +1,17 @@
 {
   "scenes": [
+    "intro",
     "blocked",
     "escalation"
   ],
   "transition": {
     "duration": 1.5,
     "title": "והצד השני של המטבע"
-  }
+  },
+  "continuous_joins": [
+    [
+      "intro",
+      "blocked"
+    ]
+  ]
 }

@@ -18,7 +18,7 @@ class NotebookWatcherTests(unittest.TestCase):
                       if 'scene_timelines' in cell.defs)
         watchers = [value for value in values.values() if isinstance(value, FileState)]
         self.assertEqual({watcher.name for watcher in watchers},
-                         {'timeline.json', 'timeline_blocked.json', 'sequence.json'})
+                         {'timeline.json', 'timeline_blocked.json', 'timeline_intro.json', 'sequence.json'})
         for watcher in watchers:
             with self.subTest(file=watcher.name):
                 scheduled = runner.resolve_state_updates({watcher: 'external-file-change'})

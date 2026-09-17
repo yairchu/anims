@@ -4,8 +4,9 @@ import math
 from pathlib import Path
 
 DEFAULT_TIMELINE = Path(__file__).with_name("timeline.json")
-SCENE_LABELS = {"Blocked partnership": "blocked", "Escalation": "escalation", "Full sequence": "full"}
-SCENE_FILES = {"blocked": "timeline_blocked.json", "escalation": "timeline.json"}
+SCENE_LABELS = {"Meter introduction": "intro", "Blocked partnership": "blocked", "Escalation": "escalation", "Full sequence": "full"}
+SCENE_FILES = {"intro": "timeline_intro.json", "blocked": "timeline_blocked.json", "escalation": "timeline.json"}
+REVEAL_TRACKS = {"left_reveal", "right_reveal", "arc_reveal", "needle_reveal", "logos_reveal", "zones_reveal"}
 BLOCKED_TRACKS = {"potential_position", "potential_opacity", "netanyahu", "abbas", "smotrich", "partnership", "block"}
 TRACKS = {"israeli_position", "palestinian_position", "israeli_y", "palestinian_y",
           "portrait", "translation", "outcome"}
@@ -37,8 +38,8 @@ def load_timeline(path=DEFAULT_TIMELINE):
     scene = data.get("scene", "escalation")
     if scene not in SCENE_FILES:
         raise ValueError(f"Unknown scene: {scene}")
-    required = TRACKS | (BLOCKED_TRACKS if scene == "blocked" else set())
-    if set(data["tracks"]) != required:
+    required = TRACKS | (BLOCKED_TRACKS if scene == "blocked" else REVEAL_TRACKS if scene == "intro" else set())
+    if not required <= set(data["tracks"]) or set(data["tracks"]) - required - REVEAL_TRACKS:
         raise ValueError(f"Timeline must define these tracks: {sorted(required)}")
     for name, keys in data["tracks"].items():
         if not keys or keys[0][0] != 0:
@@ -79,8 +80,8 @@ def state_at(timeline, time):
                 state = state_at(segment["timeline"], local)
                 # Fade only at joins, preserving each standalone scene's timing.
                 state["scene_opacity"] = min(
-                    ease(local / .4) if index else 1,
-                    ease((segment["duration"] - local) / .4) if index < len(timeline["segments"]) - 1 else 1,
+                    ease(local / .4) if index and timeline["segments"][index-1].get("scene") == "transition" else 1,
+                    ease((segment["duration"] - local) / .4) if index + 1 < len(timeline["segments"]) and timeline["segments"][index+1].get("scene") == "transition" else 1,
                 )
                 return state
     state = {name: sample(keys, time) for name, keys in timeline["tracks"].items()}
@@ -101,8 +102,9 @@ def load_scene(scene="escalation", timeline_path=None):
         raise ValueError(f"Unknown scene: {scene}")
     manifest = json.loads(Path(__file__).with_name("sequence.json").read_text())
     segments, chapters, offset = [], [], 0
-    for entry in manifest["scenes"]:
-        if segments:
+    for entry_index, entry in enumerate(manifest["scenes"]):
+        continuous = entry_index > 0 and [manifest["scenes"][entry_index-1], entry] in manifest.get("continuous_joins", [])
+        if segments and not continuous:
             duration = manifest["transition"]["duration"]
             if not math.isfinite(duration) or duration <= 0:
                 raise ValueError("Transition duration must be positive and finite")

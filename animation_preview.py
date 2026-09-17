@@ -78,7 +78,7 @@ async function selectScene(){
 </script>'''
 
 
-def make_handler(timeline_path=None, *, scene="blocked", transparent=False, width=None, height=None):
+def make_handler(timeline_path=None, *, scene="intro", transparent=False, width=None, height=None):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--timeline", type=Path)
-    source.add_argument("--scene", choices=SCENE_LABELS.values(), default="blocked")
+    source.add_argument("--scene", choices=SCENE_LABELS.values(), default="intro")
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()
     load_scene(args.scene, args.timeline)

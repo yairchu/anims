@@ -45,7 +45,16 @@ def render_meter(
     reconciliation_strength=0,
     zone_labels=(("פתח", "לפיוס"), ("חלון", "לסיפוח")),
     translated_zone_labels=None,
+    reveal=None,
 ):
+    reveal = reveal or {}
+    left_reveal = reveal.get("left_reveal", 1)
+    right_reveal = reveal.get("right_reveal", 1)
+    arc_reveal = reveal.get("arc_reveal", 1)
+    needle_reveal = reveal.get("needle_reveal", 1)
+    logos_reveal = reveal.get("logos_reveal", 1)
+    zones_reveal = reveal.get("zones_reveal", 1)
+    arc_x, arc_y = meter_point(1 - arc_reveal)
     # Mirror only the geometry so the labels and logos stay upright.
     geometry_transform = (
         "translate(0 400) scale(1 -1)" if upside_down else ""
@@ -56,9 +65,9 @@ def render_meter(
 
     def render_labels(texts, opacity, blur=0, layer="original"):
         text_svg = "".join(
-            f'<text x="{x}" y="{label_y + 15 * (3 - len(lines)) + 30 * line}">'
+            f'<text opacity="{visibility}" x="{x}" y="{label_y + 15 * (3 - len(lines)) + 30 * line}">'
             f"{html.escape(text)}</text>"
-            for x, lines in zip((60, 540), texts)
+            for x, lines, visibility in zip((60, 540), texts, (left_reveal, right_reveal))
             for line, text in enumerate(lines)
         )
         return render_text_layer(text_svg, opacity, blur, layer)
@@ -94,9 +103,9 @@ def render_meter(
     right_opacity = .10 + .25 * right_depth
     zones_svg = (
         f'<path data-zone="reconciliation" d="{zone_wedge(0, reconciliation_end)}" '
-        f'fill="#55b98b" fill-opacity="{left_opacity}"/>'
+        f'fill="#55b98b" fill-opacity="{left_opacity*zones_reveal}"/>'
         f'<path data-zone="right" d="{zone_wedge(right_zone_start, 1)}" '
-        f'fill="#e5a044" fill-opacity="{right_opacity}"/>'
+        f'fill="#e5a044" fill-opacity="{right_opacity*zones_reveal}"/>'
     )
 
     def render_zone_labels(texts):
@@ -139,7 +148,7 @@ def render_meter(
             <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="{color}" flood-opacity="{glow:.6f}"/>
           </filter>
         </defs>
-        <g data-icon-zone="{'reconciliation' if index == 0 else 'right'}" data-scale="{scale:.6f}"
+        <g data-icon-zone="{'reconciliation' if index == 0 else 'right'}" data-scale="{scale:.6f}" opacity="{logos_reveal}"
            transform="translate({center_x} {center_y}) scale({scale:.6f}) translate({-center_x} {-center_y})">
           <image href="{html.escape(uri, quote=True)}" x="{center_x-40}" y="{logo_y}"
                  width="80" height="80" filter="url(#{filter_id})"/>
@@ -150,17 +159,19 @@ def render_meter(
                    role="img" aria-label="{html.escape(title, quote=True)}">
       <g transform="{geometry_transform}">
         {zones_svg}
-        <path d="M 116.149 185.731 A 240 240 0 0 1 483.851 185.731"
-              fill="none" stroke="{color}" stroke-width="10" stroke-linecap="round" />
+        <path id="{meter_id}-arc" d="M 483.851 185.731 A 240 240 0 0 0 {arc_x:.3f} {arc_y:.3f}"
+              opacity="{1 if arc_reveal > 0 else 0}" fill="none" stroke="{color}" stroke-width="10" stroke-linecap="round" />
+        <g id="{meter_id}-needle" opacity="{needle_reveal}">
         <g transform="rotate({needle_angle} 300 340)">
           <path d="M 294 340 L 300 112 L 306 340 Z" fill="{needle_color}" />
         </g>
         <circle cx="300" cy="340" r="12" fill="{needle_color}" />
         <circle cx="300" cy="340" r="4" fill="white" />
+        </g>
       </g>
       <g fill="black" font-size="26" font-family="Arial, sans-serif"
          text-anchor="middle" direction="rtl">{label_svg}</g>
-      <g font-size="16" font-family="Arial, sans-serif" text-anchor="middle" direction="rtl"
+      <g opacity="{zones_reveal}" font-size="16" font-family="Arial, sans-serif" text-anchor="middle" direction="rtl"
          stroke="white" stroke-width="2" stroke-opacity=".8" paint-order="stroke">{zone_text}</g>
       {logo_svg}
     </g>'''
@@ -303,6 +314,7 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
           font-family="Arial, sans-serif" font-size="{min(width,height)*.045}" fill="{israeli_color}"
           opacity="{state.get('scene_opacity',1)}">{html.escape(state['title'])}</text></svg>'''
     blocked = state.get("scene") == "blocked"
+    intro = state.get("scene") == "intro"
     mutual = (state["israeli_position"] <= reconciliation_end
               and state["palestinian_position"] <= reconciliation_end
               and state["palestinian_y"] >= 0)
@@ -337,7 +349,7 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
     isr = render_meter(meter_id="israeli", title="Israeli political meter", color=israeli_color,
         needle_color=needle_color, position=state["israeli_position"], y_offset=state["israeli_y"],
         labels=(("לכולם", "מגיע", "זכויות"), ("ישראל", "ליהודים", "בלבד")),
-        logos=(assets["vegan"], assets["kach"]), **zone_options)
+        logos=(assets["vegan"], assets["kach"]), reveal=state, **zone_options)
     connection = ""
     if mutual:
         x0, y0 = meter_point(reconciliation_end/2)
@@ -346,14 +358,14 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
         connection = f'''<path id="reconciliation-connection"
           d="M{x0:.3f} {y_top:.3f} C{x0-55:.3f} {y_top+40:.3f}, {x0-55:.3f} {y_bottom-40:.3f}, {x0:.3f} {y_bottom:.3f}"
           fill="none" stroke="#55b98b" stroke-width="12" stroke-opacity=".25" stroke-linecap="round"/>'''
-    if blocked:
+    if blocked or intro:
         portrait, pal, connection = "", "", ""
-    scene_art = render_blocked(state, assets) if blocked else render_events(state)
+    scene_art = "" if intro else render_blocked(state, assets) if blocked else render_events(state)
     # A neutral visual highlight of the outcome, without inventing dialogue or motive.
     outcome = f'''<g opacity="{state['outcome']}" fill="none" stroke="{israeli_color}" stroke-width="3">
       <circle cx="300" cy="{state['israeli_y']+340}" r="20"/>
     </g>'''
-    if blocked:
+    if blocked or intro:
         outcome = ""
     artwork = f"{portrait}{connection}{pal}{isr}{scene_art}{outcome}"
     if "scene_opacity" in state:

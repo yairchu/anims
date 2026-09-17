@@ -17,6 +17,8 @@ class SceneTests(unittest.TestCase):
         self.full = load_scene('full')
 
     def test_blocked_possibility_never_moves_actual_needle(self):
+        # Isolate the two tracks from editorial changes to the shipped timeline.
+        self.blocked["tracks"]["israeli_position"] = [[0, .5]]
         for frame in range(361):
             state = state_at(self.blocked, frame / 30)
             self.assertEqual(state['israeli_position'], .5)
@@ -29,22 +31,22 @@ class SceneTests(unittest.TestCase):
         self.assertEqual(after['outcome'], 1)
 
     def test_sequence_boundaries_and_clamping(self):
-        self.assertEqual(self.full['duration'], 38.5)
-        self.assertEqual(state_at(self.full, 11.99)['scene'], 'blocked')
-        self.assertEqual(state_at(self.full, 12)['scene'], 'transition')
-        self.assertEqual(state_at(self.full, 13.49)['scene'], 'transition')
-        self.assertEqual(state_at(self.full, 13.5)['scene'], 'escalation')
+        self.assertEqual(self.full['duration'], 52.5)
+        self.assertEqual(state_at(self.full, 25.99)['scene'], 'blocked')
+        self.assertEqual(state_at(self.full, 26)['scene'], 'transition')
+        self.assertEqual(state_at(self.full, 27.49)['scene'], 'transition')
+        self.assertEqual(state_at(self.full, 27.5)['scene'], 'escalation')
         self.assertEqual(state_at(self.full, -10), state_at(self.full, 0))
-        self.assertEqual(state_at(self.full, 100), state_at(self.full, 38.5))
-        expected = state_at(self.full, 18.5)
+        self.assertEqual(state_at(self.full, 100), state_at(self.full, 52.5))
+        expected = state_at(self.full, 32.5)
         state_at(self.full, 1)
-        self.assertEqual(expected, state_at(self.full, 18.5))
+        self.assertEqual(expected, state_at(self.full, 32.5))
         self.assertEqual(expected['israeli_position'], state_at(load_scene('escalation'), 5)['israeli_position'])
-        self.assertEqual(self.full['chapters'][5]['time'], 13.5)
+        self.assertEqual(self.full['chapters'][10]['time'], 27.5)
 
     def test_embedded_sequence_can_be_serialized_for_export(self):
         snapshot = json.loads(json.dumps(self.full))
-        for time in (0, 5, 12.7, 13.5, 30, 38.5):
+        for time in (0, 5, 12.7, 27.5, 30, 52.5):
             self.assertEqual(state_at(snapshot, time), state_at(self.full, time))
 
     def test_scene_artwork_and_optional_portraits(self):
@@ -59,7 +61,7 @@ class SceneTests(unittest.TestCase):
         self.assertIn('custom-abbas.png', render_scene(state, assets=portraits))
         ns = {'s': 'http://www.w3.org/2000/svg'}
         for width, height in FORMATS.values():
-            for scene, times in ((self.blocked, (0, 3, 7.2, 12)), (self.full, (12, 12.7, 13.5, 38.5))):
+            for scene, times in ((self.blocked, (0, 3, 7.2, 12)), (self.full, (12, 12.7, 27.5, 52.5))):
                 for time in times:
                     root = ET.fromstring(render_scene(state_at(scene, time), assets=self.assets,
                                                      width=width, height=height, transparent=True))
@@ -83,8 +85,8 @@ class SceneTests(unittest.TestCase):
     def test_preview_routes_select_scene_and_reject_unknown_scene(self):
         body, errors = self.request('/scenes')
         self.assertFalse(errors)
-        self.assertEqual(json.loads(body)['selected'], 'blocked')
-        for scene, duration in (('blocked', 12), ('escalation', 25), ('full', 38.5)):
+        self.assertEqual(json.loads(body)['selected'], 'intro')
+        for scene, duration in (('intro', 14), ('blocked', 12), ('escalation', 25), ('full', 52.5)):
             body, errors = self.request('/config?scene=' + scene)
             self.assertFalse(errors)
             self.assertEqual(json.loads(body)['duration'], duration)
