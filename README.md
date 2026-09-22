@@ -29,6 +29,28 @@ uv run python animation_preview.py
 
 Open http://127.0.0.1:8765. This server listens only on localhost. The playback server reads timeline files on each request; reload its page after changing durations or chapter markers. It requires permission to bind a local port. Browser preview and native export share SVG artwork; very small differences in font/filter rendering are possible.
 
+## Shared notebook and CLI inputs
+
+The notebook controls and exporter use **moops**. Boundary, color, scene, and format
+controls are declared once in `animation_inputs.py`; rendering and those controls
+share visual defaults from `scene_defaults.py`. Change `RECONCILIATION_END` there
+to update both preview and export (currently `0.2`, symmetric with `0.8`). The CLI
+uses the same boundary ranges as the sliders: `0.1–0.45` and `0.55–0.95`.
+
+All notebook inputs are also available as CLI options. For example:
+
+```sh
+uv run python hamas_neches.py --help
+uv run python hamas_neches.py --scene blocked --blocked-time 4 --reconciliation-end 0.3
+uv run python export_video.py --help
+```
+
+Running the notebook as a script computes its preview; use `export_video.py` to
+write video files. The notebook's **Notebook CLI info** panel reproduces its
+current controls. The separate export command renders the selected timeline.
+Color pickers and the Manual/Timeline radio retain their notebook UI through
+moops custom controls, with equivalent CLI inputs.
+
 ## Export
 
 Silent 25-second, 1080×1920, 30 fps portrait MP4 (white background):
@@ -61,11 +83,11 @@ The alpha export removes the scene background, but deliberately preserves backgr
 
 ## Shaded zones
 
-Both meters have a green reconciliation zone (leftmost 25%) and an amber right-hand zone (rightmost 20%). Labels are **פתח לפיוס** on both left ends, **חלון לסיפוח** on the Israeli right, and **סכנת הסלמה** on the Palestinian right. Palestinian zone labels translate from Arabic along with the main labels.
+Both meters have a green reconciliation zone (leftmost 20%) and an amber right-hand zone (rightmost 20%). Labels are **פתח לפיוס** on both left ends, **חלון לסיפוח** on the Israeli right, and **סכנת הסלמה** on the Palestinian right. Palestinian zone labels translate from Arabic along with the main labels.
 
 A left wedge brightens when its needle enters. When both visible meters enter, both brighten further and a soft green connection appears between them. Amber shading increases as each needle advances into its right zone. The corresponding icon smoothly grows up to 125% and gains a matching glow as the needle moves deeper into either zone. Both left icons receive an extra shared glow during reconciliation. The effect reverses on exit and remains deterministic when scrubbing.
 
-Manual mode exposes boundary sliders; their settings also apply when you switch to Timeline. The displayed export command includes them. CLI equivalents: `--reconciliation-end 0.25 --right-zone-start 0.8`. These are illustrative thresholds, not measured political probabilities.
+Manual mode exposes boundary sliders; their settings also apply when you switch to Timeline. The displayed export command includes them. CLI equivalents: `--reconciliation-end 0.2 --right-zone-start 0.8`. These are illustrative thresholds, not measured political probabilities.
 
 ## Scenes and the full sequence
 

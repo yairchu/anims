@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 import unittest
+import moops
 from unittest.mock import patch
 
 from marimo._runtime.virtual_file import VirtualFileLifecycleItem
@@ -16,9 +17,9 @@ class NotebookAssetTests(unittest.TestCase):
         with patch.object(VirtualFileLifecycleItem, 'add_to_cell_lifecycle_registry',
                           lambda item: item.create(context)):
             _, values = app.run(defs={
-                'scene_choice': SimpleNamespace(value='blocked'),
-                'control_mode': SimpleNamespace(value='Manual'),
-                'video_format': SimpleNamespace(value='portrait'),
+                'args': moops.Group.with_overrides({
+                    'scene': 'blocked', 'control_mode': 'Manual', 'format': 'portrait',
+                }),
             })
         self.assertNotIn('data:image', values['scene_svg'])
         self.assertLess(len(values['scene_svg'].encode()), 100_000)

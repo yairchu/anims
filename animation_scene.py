@@ -4,6 +4,8 @@ import html
 import math
 from functools import lru_cache
 from pathlib import Path
+from scene_defaults import (RECONCILIATION_END, RIGHT_ZONE_START,
+                            ISRAELI_COLOR, PALESTINIAN_COLOR, NEEDLE_COLOR)
 
 def meter_point(position, radius=240):
     angle = math.radians(-50 + 100 * position)
@@ -16,7 +18,7 @@ def zone_wedge(start, end):
     return f"M300 340 L{x0:.3f} {y0:.3f} A240 240 0 0 1 {x1:.3f} {y1:.3f} Z"
 
 
-def zone_emphasis(position, reconciliation_end=.25, right_zone_start=.8):
+def zone_emphasis(position, reconciliation_end=RECONCILIATION_END, right_zone_start=RIGHT_ZONE_START):
     """Continuous emphasis, zero at a boundary and full at the end of the arc."""
     def smooth(value):
         value = max(0, min(1, value))
@@ -39,8 +41,8 @@ def render_meter(
     logos=(),
     translated_labels=None,
     translation_progress=0,
-    reconciliation_end=.25,
-    right_zone_start=.8,
+    reconciliation_end=RECONCILIATION_END,
+    right_zone_start=RIGHT_ZONE_START,
     mutual_reconciliation=False,
     reconciliation_strength=0,
     zone_labels=(("פתח", "לפיוס"), ("חלון", "לסיפוח")),
@@ -301,8 +303,8 @@ def render_events(state):
 
 
 def render_scene(state, *, assets=None, width=1080, height=1920, transparent=False,
-                 israeli_color="#0056d6", palestinian_color="#149149", needle_color="#7a7a7a",
-                 reconciliation_end=.25, right_zone_start=.8):
+                 israeli_color=ISRAELI_COLOR, palestinian_color=PALESTINIAN_COLOR, needle_color=NEEDLE_COLOR,
+                 reconciliation_end=RECONCILIATION_END, right_zone_start=RIGHT_ZONE_START):
     if not 0 < reconciliation_end < right_zone_start < 1:
         raise ValueError("Zone boundaries must satisfy 0 < left < right < 1")
     assets = embedded_assets() if assets is None else assets

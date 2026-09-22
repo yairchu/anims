@@ -1,4 +1,5 @@
 import unittest
+import moops
 
 from marimo._runtime.runner.cell_runner import Runner
 from marimo._runtime.watch._file import FileState
@@ -10,7 +11,7 @@ class NotebookWatcherTests(unittest.TestCase):
     def test_each_file_update_schedules_timeline_reload(self):
         # Script execution alone cannot catch lost reactive dependencies. Use
         # marimo's scheduler, which matches a changed state to direct cell refs.
-        _, values = app.run()
+        _, values = app.run(defs={"args": moops.Group(["test"])})
         graph = app._graph
         runner = Runner(roots=set(), graph=graph, glbls=dict(values),
                         debugger=None, hooks=None)

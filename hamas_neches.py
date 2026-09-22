@@ -5,10 +5,98 @@ app = marimo.App(width="full")
 
 
 @app.cell
+def _(
+    abbas_entry,
+    arc_reveal,
+    args,
+    block_visibility,
+    blocked_chapters,
+    blocked_outcome,
+    blocked_time,
+    control_mode,
+    escalation_chapters,
+    escalation_time,
+    far_right_peek_progress,
+    full_chapters,
+    full_time,
+    intro_chapters,
+    intro_time,
+    isr_meter_color_picker,
+    isr_meter_y_offset,
+    left_reveal,
+    logos_reveal,
+    needle_color_picker,
+    needle_reveal,
+    netanyahu_entry,
+    pal_meter_color_picker,
+    pal_meter_y_offset,
+    pal_political_position,
+    pal_translation_progress,
+    partnership_visibility,
+    political_position,
+    potential_opacity,
+    potential_position,
+    reconciliation_boundary,
+    right_reveal,
+    right_zone_boundary,
+    scene_choice,
+    smotrich_entry,
+    video_format,
+    zones_reveal,
+):
+    interface = args.interface(
+        scene_choice,
+        control_mode,
+        video_format,
+        political_position,
+        pal_political_position,
+        isr_meter_y_offset,
+        pal_meter_y_offset,
+        pal_translation_progress,
+        far_right_peek_progress,
+        intro_chapters,
+        intro_time,
+        blocked_chapters,
+        blocked_time,
+        escalation_chapters,
+        escalation_time,
+        full_chapters,
+        full_time,
+        left_reveal,
+        right_reveal,
+        arc_reveal,
+        needle_reveal,
+        logos_reveal,
+        zones_reveal,
+        potential_position,
+        potential_opacity,
+        netanyahu_entry,
+        abbas_entry,
+        smotrich_entry,
+        partnership_visibility,
+        blocked_outcome,
+        block_visibility,
+        reconciliation_boundary,
+        right_zone_boundary,
+        isr_meter_color_picker,
+        pal_meter_color_picker,
+        needle_color_picker,
+    )
+    interface
+    return
+
+
+@app.cell
 def _():
     import shlex
     import marimo as mo
-    import wigglystuff
+    import moops
+    from animation_inputs import (
+        boundary_controls,
+        color_controls,
+        scene_control,
+        format_control,
+    )
     from animation_scene import notebook_asset_urls, render_scene
     from animation_timeline import (
         DEFAULT_TIMELINE,
@@ -18,23 +106,32 @@ def _():
         load_scene,
         state_at,
     )
-    from video_formats import FORMATS, FORMAT_LABELS
+    from video_formats import FORMATS
 
     return (
         DEFAULT_TIMELINE,
         FORMATS,
-        FORMAT_LABELS,
         SCENE_FILES,
         SCENE_LABELS,
+        boundary_controls,
+        color_controls,
         ease,
+        format_control,
         load_scene,
         mo,
+        moops,
         notebook_asset_urls,
         render_scene,
+        scene_control,
         shlex,
         state_at,
-        wigglystuff,
     )
+
+
+@app.cell
+def _(moops):
+    args = moops.Group()
+    return (args,)
 
 
 @app.cell
@@ -46,7 +143,9 @@ def _(notebook_asset_urls):
 
 @app.cell
 def _(DEFAULT_TIMELINE, SCENE_FILES, mo):
-    intro_timeline_file = mo.watch.file(DEFAULT_TIMELINE.with_name(SCENE_FILES["intro"]))
+    intro_timeline_file = mo.watch.file(
+        DEFAULT_TIMELINE.with_name(SCENE_FILES["intro"])
+    )
     # Watchers must be named globals: marimo does not track state inside lists.
     blocked_timeline_file = mo.watch.file(
         DEFAULT_TIMELINE.with_name(SCENE_FILES["blocked"])
@@ -76,55 +175,54 @@ def _(
     blocked_timeline_file.read_text()
     escalation_timeline_file.read_text()
     sequence_file.read_text()
-    scene_timelines = {
-        name: load_scene(name) for name in SCENE_LABELS.values()
-    }
+    scene_timelines = {name: load_scene(name) for name in SCENE_LABELS.values()}
     return (scene_timelines,)
 
 
 @app.cell
-def _(FORMAT_LABELS, SCENE_LABELS, mo):
-    scene_choice = mo.ui.dropdown(
-        SCENE_LABELS,
-        value="Meter introduction",
-        label="Scene",
-        allow_select_none=False,
+def _(args, format_control, mo, scene_control):
+    scene_choice = scene_control(args, default="intro")
+    control_mode = args.custom(
+        args.dropdown(
+            ["Manual", "Timeline"],
+            value="Timeline",
+            allow_select_none=False,
+            option="--control-mode",
+            help_text="Controls",
+        ),
+        lambda value: mo.ui.radio(
+            ["Manual", "Timeline"], value=value, inline=True, label="Controls"
+        ),
     )
-    control_mode = mo.ui.radio(
-        ["Manual", "Timeline"], value="Timeline", inline=True, label="Controls"
-    )
-    video_format = mo.ui.dropdown(
-        FORMAT_LABELS,
-        value="Instagram portrait · 9:16 (1080×1920)",
-        label="Video format",
-        allow_select_none=False,
-    )
-    mo.hstack(
-        [scene_choice, control_mode, video_format], justify="start", gap=2
-    )
+    video_format = format_control(args, default="portrait")
+    mo.hstack([scene_choice, control_mode, video_format], justify="start", gap=2)
     return control_mode, scene_choice, video_format
 
 
 @app.cell
-def _(mo):
+def _(args):
     # Construct controls independently of the mode so switching preserves edits.
-    political_position = mo.ui.slider(
+    political_position = args.slider(
         0,
         1,
         0.001,
         0.5,
         label="Israeli political position (left → right)",
         full_width=True,
+        option="--political-position",
+        help_text="Israeli political position (left → right)",
     )
-    pal_political_position = mo.ui.slider(
+    pal_political_position = args.slider(
         0,
         1,
         0.001,
         0.5,
         label="Palestinian political position (left → right)",
         full_width=True,
+        option="--pal-political-position",
+        help_text="Palestinian political position (left → right)",
     )
-    isr_meter_y_offset = mo.ui.slider(
+    isr_meter_y_offset = args.slider(
         0,
         300,
         1,
@@ -132,8 +230,10 @@ def _(mo):
         label="Israeli meter Y position (positive → down)",
         show_value=True,
         full_width=True,
+        option="--isr-meter-y-offset",
+        help_text="Israeli meter Y position (positive → down)",
     )
-    pal_meter_y_offset = mo.ui.slider(
+    pal_meter_y_offset = args.slider(
         -400,
         300,
         1,
@@ -141,22 +241,28 @@ def _(mo):
         label="Palestinian meter Y position (positive → down)",
         show_value=True,
         full_width=True,
+        option="--pal-meter-y-offset",
+        help_text="Palestinian meter Y position (positive → down)",
     )
-    pal_translation_progress = mo.ui.slider(
+    pal_translation_progress = args.slider(
         0,
         1,
         0.01,
         0,
         label="Palestinian labels: Arabic → Hebrew (blur)",
         full_width=True,
+        option="--pal-translation-progress",
+        help_text="Palestinian labels: Arabic → Hebrew (blur)",
     )
-    far_right_peek_progress = mo.ui.slider(
+    far_right_peek_progress = args.slider(
         0,
         1,
         0.01,
         1,
         label="Smotrich and Bibi: in frame ← → offscreen",
         full_width=True,
+        option="--far-right-peek-progress",
+        help_text="Smotrich and Bibi: in frame ← → offscreen",
     )
     return (
         far_right_peek_progress,
@@ -169,8 +275,8 @@ def _(mo):
 
 
 @app.cell
-def _(mo, scene_timelines):
-    intro_chapters = mo.ui.dropdown(
+def _(args, scene_timelines):
+    intro_chapters = args.dropdown(
         {
             f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
             for chapter in scene_timelines["intro"]["chapters"]
@@ -178,22 +284,22 @@ def _(mo, scene_timelines):
         value=next(
             iter(
                 {
-                    f"{chapter['time']:g}s · {chapter['label']}": chapter[
-                        "time"
-                    ]
+                    f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
                     for chapter in scene_timelines["intro"]["chapters"]
                 }
             )
         ),
         label="Jump to chapter",
         allow_select_none=False,
+        option="--intro-chapters",
+        help_text="Jump to chapter",
     )
     return (intro_chapters,)
 
 
 @app.cell
-def _(intro_chapters, mo, scene_timelines):
-    intro_time = mo.ui.slider(
+def _(args, intro_chapters, scene_timelines):
+    intro_time = args.slider(
         0,
         scene_timelines["intro"]["duration"],
         0.01,
@@ -201,13 +307,15 @@ def _(intro_chapters, mo, scene_timelines):
         label="Animation time (seconds)",
         show_value=True,
         full_width=True,
+        option="--intro-time",
+        help_text="Animation time (seconds)",
     )
     return (intro_time,)
 
 
 @app.cell
-def _(mo, scene_timelines):
-    blocked_chapters = mo.ui.dropdown(
+def _(args, scene_timelines):
+    blocked_chapters = args.dropdown(
         {
             f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
             for chapter in scene_timelines["blocked"]["chapters"]
@@ -215,22 +323,22 @@ def _(mo, scene_timelines):
         value=next(
             iter(
                 {
-                    f"{chapter['time']:g}s · {chapter['label']}": chapter[
-                        "time"
-                    ]
+                    f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
                     for chapter in scene_timelines["blocked"]["chapters"]
                 }
             )
         ),
         label="Jump to chapter",
         allow_select_none=False,
+        option="--blocked-chapters",
+        help_text="Jump to chapter",
     )
     return (blocked_chapters,)
 
 
 @app.cell
-def _(blocked_chapters, mo, scene_timelines):
-    blocked_time = mo.ui.slider(
+def _(args, blocked_chapters, scene_timelines):
+    blocked_time = args.slider(
         0,
         scene_timelines["blocked"]["duration"],
         0.01,
@@ -238,13 +346,15 @@ def _(blocked_chapters, mo, scene_timelines):
         label="Animation time (seconds)",
         show_value=True,
         full_width=True,
+        option="--blocked-time",
+        help_text="Animation time (seconds)",
     )
     return (blocked_time,)
 
 
 @app.cell
-def _(mo, scene_timelines):
-    escalation_chapters = mo.ui.dropdown(
+def _(args, scene_timelines):
+    escalation_chapters = args.dropdown(
         {
             f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
             for chapter in scene_timelines["escalation"]["chapters"]
@@ -252,22 +362,22 @@ def _(mo, scene_timelines):
         value=next(
             iter(
                 {
-                    f"{chapter['time']:g}s · {chapter['label']}": chapter[
-                        "time"
-                    ]
+                    f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
                     for chapter in scene_timelines["escalation"]["chapters"]
                 }
             )
         ),
         label="Jump to chapter",
         allow_select_none=False,
+        option="--escalation-chapters",
+        help_text="Jump to chapter",
     )
     return (escalation_chapters,)
 
 
 @app.cell
-def _(escalation_chapters, mo, scene_timelines):
-    escalation_time = mo.ui.slider(
+def _(args, escalation_chapters, scene_timelines):
+    escalation_time = args.slider(
         0,
         scene_timelines["escalation"]["duration"],
         0.01,
@@ -275,13 +385,15 @@ def _(escalation_chapters, mo, scene_timelines):
         label="Animation time (seconds)",
         show_value=True,
         full_width=True,
+        option="--escalation-time",
+        help_text="Animation time (seconds)",
     )
     return (escalation_time,)
 
 
 @app.cell
-def _(mo, scene_timelines):
-    full_chapters = mo.ui.dropdown(
+def _(args, scene_timelines):
+    full_chapters = args.dropdown(
         {
             f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
             for chapter in scene_timelines["full"]["chapters"]
@@ -289,22 +401,22 @@ def _(mo, scene_timelines):
         value=next(
             iter(
                 {
-                    f"{chapter['time']:g}s · {chapter['label']}": chapter[
-                        "time"
-                    ]
+                    f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
                     for chapter in scene_timelines["full"]["chapters"]
                 }
             )
         ),
         label="Jump to chapter",
         allow_select_none=False,
+        option="--full-chapters",
+        help_text="Jump to chapter",
     )
     return (full_chapters,)
 
 
 @app.cell
-def _(full_chapters, mo, scene_timelines):
-    full_time = mo.ui.slider(
+def _(args, full_chapters, scene_timelines):
+    full_time = args.slider(
         0,
         scene_timelines["full"]["duration"],
         0.01,
@@ -312,18 +424,74 @@ def _(full_chapters, mo, scene_timelines):
         label="Animation time (seconds)",
         show_value=True,
         full_width=True,
+        option="--full-time",
+        help_text="Animation time (seconds)",
     )
     return (full_time,)
 
 
 @app.cell
-def _(mo):
-    left_reveal = mo.ui.slider(0, 1, .01, 1, label="Left label reveal", full_width=True)
-    right_reveal = mo.ui.slider(0, 1, .01, 1, label="Right label reveal", full_width=True)
-    arc_reveal = mo.ui.slider(0, 1, .01, 1, label="Arc drawing reveal", full_width=True)
-    needle_reveal = mo.ui.slider(0, 1, .01, 1, label="Needle reveal", full_width=True)
-    logos_reveal = mo.ui.slider(0, 1, .01, 1, label="Logos reveal", full_width=True)
-    zones_reveal = mo.ui.slider(0, 1, .01, 0, label="Opportunity zones reveal", full_width=True)
+def _(args):
+    left_reveal = args.slider(
+        0,
+        1,
+        0.01,
+        1,
+        label="Left label reveal",
+        full_width=True,
+        option="--left-reveal",
+        help_text="Left label reveal",
+    )
+    right_reveal = args.slider(
+        0,
+        1,
+        0.01,
+        1,
+        label="Right label reveal",
+        full_width=True,
+        option="--right-reveal",
+        help_text="Right label reveal",
+    )
+    arc_reveal = args.slider(
+        0,
+        1,
+        0.01,
+        1,
+        label="Arc drawing reveal",
+        full_width=True,
+        option="--arc-reveal",
+        help_text="Arc drawing reveal",
+    )
+    needle_reveal = args.slider(
+        0,
+        1,
+        0.01,
+        1,
+        label="Needle reveal",
+        full_width=True,
+        option="--needle-reveal",
+        help_text="Needle reveal",
+    )
+    logos_reveal = args.slider(
+        0,
+        1,
+        0.01,
+        1,
+        label="Logos reveal",
+        full_width=True,
+        option="--logos-reveal",
+        help_text="Logos reveal",
+    )
+    zones_reveal = args.slider(
+        0,
+        1,
+        0.01,
+        0,
+        label="Opportunity zones reveal",
+        full_width=True,
+        option="--zones-reveal",
+        help_text="Opportunity zones reveal",
+    )
     return (
         arc_reveal,
         left_reveal,
@@ -335,30 +503,86 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
-    potential_position = mo.ui.slider(
-        0, 1, 0.01, 0.3, label="Potential needle position", full_width=True
+def _(args):
+    potential_position = args.slider(
+        0,
+        1,
+        0.01,
+        0.3,
+        label="Potential needle position",
+        full_width=True,
+        option="--potential-position",
+        help_text="Potential needle position",
     )
-    potential_opacity = mo.ui.slider(
-        0, 1, 0.01, 0.65, label="Potential needle visibility", full_width=True
+    potential_opacity = args.slider(
+        0,
+        1,
+        0.01,
+        0.65,
+        label="Potential needle visibility",
+        full_width=True,
+        option="--potential-opacity",
+        help_text="Potential needle visibility",
     )
-    netanyahu_entry = mo.ui.slider(
-        0, 1, 0.01, 1, label="Netanyahu entrance", full_width=True
+    netanyahu_entry = args.slider(
+        0,
+        1,
+        0.01,
+        1,
+        label="Netanyahu entrance",
+        full_width=True,
+        option="--netanyahu-entry",
+        help_text="Netanyahu entrance",
     )
-    abbas_entry = mo.ui.slider(
-        0, 1, 0.01, 1, label="Abbas entrance", full_width=True
+    abbas_entry = args.slider(
+        0,
+        1,
+        0.01,
+        1,
+        label="Abbas entrance",
+        full_width=True,
+        option="--abbas-entry",
+        help_text="Abbas entrance",
     )
-    smotrich_entry = mo.ui.slider(
-        0, 1, 0.01, 0, label="Smotrich entrance", full_width=True
+    smotrich_entry = args.slider(
+        0,
+        1,
+        0.01,
+        0,
+        label="Smotrich entrance",
+        full_width=True,
+        option="--smotrich-entry",
+        help_text="Smotrich entrance",
     )
-    partnership_visibility = mo.ui.slider(
-        0, 1, 0.01, 1, label="Possible partnership visibility", full_width=True
+    partnership_visibility = args.slider(
+        0,
+        1,
+        0.01,
+        1,
+        label="Possible partnership visibility",
+        full_width=True,
+        option="--partnership-visibility",
+        help_text="Possible partnership visibility",
     )
-    blocked_outcome = mo.ui.slider(
-        0, 1, 0.01, 0, label="Final caption visibility", full_width=True
+    blocked_outcome = args.slider(
+        0,
+        1,
+        0.01,
+        0,
+        label="Final caption visibility",
+        full_width=True,
+        option="--blocked-outcome",
+        help_text="Final caption visibility",
     )
-    block_visibility = mo.ui.slider(
-        0, 1, 0.01, 0, label="Partnership block visibility", full_width=True
+    block_visibility = args.slider(
+        0,
+        1,
+        0.01,
+        0,
+        label="Partnership block visibility",
+        full_width=True,
+        option="--block-visibility",
+        help_text="Partnership block visibility",
     )
     return (
         abbas_entry,
@@ -373,38 +597,15 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
-    reconciliation_boundary = mo.ui.slider(
-        0.1,
-        0.45,
-        0.01,
-        0.2,
-        label="Reconciliation zone ends at",
-        show_value=True,
-        full_width=True,
-    )
-    right_zone_boundary = mo.ui.slider(
-        0.55,
-        0.95,
-        0.01,
-        0.8,
-        label="Right-hand zones start at",
-        show_value=True,
-        full_width=True,
-    )
+def _(args, boundary_controls):
+    reconciliation_boundary, right_zone_boundary = boundary_controls(args)
     return reconciliation_boundary, right_zone_boundary
 
 
 @app.cell
-def _(mo, wigglystuff):
-    isr_meter_color_picker = mo.ui.anywidget(
-        wigglystuff.ColorPicker(color="#0056d6")
-    )
-    pal_meter_color_picker = mo.ui.anywidget(
-        wigglystuff.ColorPicker(color="#149149")
-    )
-    needle_color_picker = mo.ui.anywidget(
-        wigglystuff.ColorPicker(color="#7a7a7a")
+def _(args, color_controls):
+    isr_meter_color_picker, pal_meter_color_picker, needle_color_picker = (
+        color_controls(args)
     )
     return isr_meter_color_picker, needle_color_picker, pal_meter_color_picker
 
@@ -456,7 +657,16 @@ def _(
     video_format,
     zones_reveal,
 ):
-    intro_controls = [political_position, isr_meter_y_offset, left_reveal, right_reveal, arc_reveal, needle_reveal, logos_reveal, zones_reveal]
+    intro_controls = [
+        political_position,
+        isr_meter_y_offset,
+        left_reveal,
+        right_reveal,
+        arc_reveal,
+        needle_reveal,
+        logos_reveal,
+        zones_reveal,
+    ]
     escalation_controls = [
         political_position,
         pal_political_position,
@@ -489,8 +699,11 @@ def _(
         mo.vstack([selected_chapters, selected_time])
         if use_timeline
         else mo.vstack(
-            intro_controls if selected_scene == "intro" else
-            blocked_controls if selected_scene == "blocked" else escalation_controls
+            intro_controls
+            if selected_scene == "intro"
+            else blocked_controls
+            if selected_scene == "blocked"
+            else escalation_controls
         )
     )
     scene_state = (
@@ -521,16 +734,25 @@ def _(
             outcome=blocked_outcome.value,
         )
     if not use_timeline and selected_scene == "intro":
-        scene_state = dict(scene_state, scene="intro", left_reveal=left_reveal.value, right_reveal=right_reveal.value, arc_reveal=arc_reveal.value, needle_reveal=needle_reveal.value, logos_reveal=logos_reveal.value, zones_reveal=zones_reveal.value)
+        scene_state = dict(
+            scene_state,
+            scene="intro",
+            left_reveal=left_reveal.value,
+            right_reveal=right_reveal.value,
+            arc_reveal=arc_reveal.value,
+            needle_reveal=needle_reveal.value,
+            logos_reveal=logos_reveal.value,
+            zones_reveal=zones_reveal.value,
+        )
     preview_width, preview_height = FORMATS[video_format.value]
     scene_svg = render_scene(
         scene_state,
         assets=preview_assets,
         width=preview_width,
         height=preview_height,
-        israeli_color=isr_meter_color_picker.value["color"],
-        palestinian_color=pal_meter_color_picker.value["color"],
-        needle_color=needle_color_picker.value["color"],
+        israeli_color=isr_meter_color_picker.value,
+        palestinian_color=pal_meter_color_picker.value,
+        needle_color=needle_color_picker.value,
         reconciliation_end=reconciliation_boundary.value,
         right_zone_start=right_zone_boundary.value,
     )
@@ -538,7 +760,7 @@ def _(
     preview = mo.Html(
         f'<div style="width:min(100%, {720 * preview_width / preview_height}px);margin:auto">{scene_svg}</div>'
     )
-    color_controls = mo.hstack(
+    color_layout = mo.hstack(
         [
             mo.vstack([mo.md("Israel"), isr_meter_color_picker]),
             mo.vstack([mo.md("Palestinians"), pal_meter_color_picker]),
@@ -558,13 +780,13 @@ def _(
                     active_controls,
                     reconciliation_boundary,
                     right_zone_boundary,
-                    color_controls,
+                    color_layout,
                     mo.md(
                         f"Export this format: `uv run python export_video.py --scene {selected_scene} --format {video_format.value} "
                         f"--reconciliation-end {reconciliation_boundary.value:.2f} --right-zone-start {right_zone_boundary.value:.2f} "
-                        f"--israeli-color {shlex.quote(isr_meter_color_picker.value['color'])} "
-                        f"--palestinian-color {shlex.quote(pal_meter_color_picker.value['color'])} "
-                        f"--needle-color {shlex.quote(needle_color_picker.value['color'])}`"
+                        f"--israeli-color {shlex.quote(isr_meter_color_picker.value)} "
+                        f"--palestinian-color {shlex.quote(pal_meter_color_picker.value)} "
+                        f"--needle-color {shlex.quote(needle_color_picker.value)}`"
                     ),
                 ]
             ),

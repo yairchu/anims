@@ -94,11 +94,11 @@ class TimelineTests(unittest.TestCase):
 
     def test_icon_emphasis_is_smooth_at_zone_boundaries(self):
         self.assertEqual(zone_emphasis(.5), (0, 0))
-        self.assertEqual(zone_emphasis(.25), (0, 0))
+        self.assertEqual(zone_emphasis(.2), (0, 0))
         self.assertEqual(zone_emphasis(.8), (0, 0))
         self.assertEqual(zone_emphasis(0), (1, 0))
         self.assertEqual(zone_emphasis(1), (0, 1))
-        self.assertLess(zone_emphasis(.25-1e-6)[0], 1e-8)
+        self.assertLess(zone_emphasis(.2-1e-6)[0], 1e-8)
         self.assertLess(zone_emphasis(.8+1e-6)[1], 1e-8)
 
     def test_icon_scale_and_shared_glow(self):
