@@ -781,7 +781,8 @@ def _(
     )
     # Fit either format on screen while retaining the exact export aspect ratio.
     preview = mo.Html(
-        f'<div style="width:min(100%, {720 * preview_width / preview_height}px);margin:auto">{scene_svg}</div>'
+        f'<div style="width:min(100%, {720 * preview_width / preview_height}px);'
+        f'margin:auto;line-height:0;outline:1px solid #808080">{scene_svg}</div>'
     )
     color_layout = mo.hstack(
         [
