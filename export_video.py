@@ -22,6 +22,7 @@ from animation_inputs import (
 from animation_scene import render_scene
 from animation_timeline import load_scene, state_at
 from video_formats import FORMATS
+from scene_defaults import DEFAULT_EXPORT_SCENE
 
 
 def parse_options(argv=None):
@@ -93,7 +94,7 @@ def parse_options(argv=None):
         raise ValueError("Use either --scene or --timeline, not both")
     if not args.output:
         raise ValueError("--output must be a nonempty path")
-    args.scene = args.scene or "escalation"
+    args.scene = args.scene or DEFAULT_EXPORT_SCENE
     for name in ("timeline", "output", "stills"):
         value = getattr(args, name)
         setattr(args, name, Path(value) if value else None)

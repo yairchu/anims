@@ -1,6 +1,7 @@
 """One moops declaration for each input shared by preview and export."""
 
 from scene_defaults import (
+    DEFAULT_EXPORT_SCENE,
     ENDPOINT_TEXT_SIZE,
     ZONE_TEXT_SIZE,
     METER_SPACING,
@@ -104,3 +105,30 @@ def layout_controls(args):
             (0, 240, 5, METER_SPACING, "--meter-spacing", "Meter gap (scene units)"),
         )
     )
+
+
+def build_export_command(scene, video_format, timeline, **settings):
+    """Emit only options that differ from the exporter's effective defaults."""
+    import shlex
+
+    from video_formats import FORMATS
+
+    defaults = dict(
+        reconciliation_end=RECONCILIATION_END,
+        right_zone_start=RIGHT_ZONE_START,
+        endpoint_text_size=ENDPOINT_TEXT_SIZE,
+        zone_text_size=ZONE_TEXT_SIZE,
+        meter_spacing=METER_SPACING,
+        israeli_color=ISRAELI_COLOR,
+        palestinian_color=PALESTINIAN_COLOR,
+        needle_color=NEEDLE_COLOR,
+    )
+    command = ["uv", "run", "python", "export_video.py"]
+    if scene != DEFAULT_EXPORT_SCENE:
+        command.extend(["--scene", scene])
+    if FORMATS[video_format] != (timeline["width"], timeline["height"]):
+        command.extend(["--format", video_format])
+    for name, value in settings.items():
+        if value != defaults[name]:
+            command.extend(["--" + name.replace("_", "-"), str(value)])
+    return shlex.join(command)

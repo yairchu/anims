@@ -14,6 +14,7 @@ def _(
     blocked_outcome,
     blocked_time,
     control_mode,
+    endpoint_text_size,
     escalation_chapters,
     escalation_time,
     far_right_peek_progress,
@@ -25,6 +26,7 @@ def _(
     isr_meter_y_offset,
     left_reveal,
     logos_reveal,
+    meter_spacing,
     needle_color_picker,
     needle_reveal,
     netanyahu_entry,
@@ -36,15 +38,13 @@ def _(
     political_position,
     potential_opacity,
     potential_position,
-    endpoint_text_size,
-    zone_text_size,
-    meter_spacing,
     reconciliation_boundary,
     right_reveal,
     right_zone_boundary,
     scene_choice,
     smotrich_entry,
     video_format,
+    zone_text_size,
     zones_reveal,
 ):
     interface = args.interface(
@@ -94,10 +94,10 @@ def _(
 
 @app.cell
 def _():
-    import shlex
     import marimo as mo
     import moops
     from animation_inputs import (
+        build_export_command,
         layout_controls,
         boundary_controls,
         color_controls,
@@ -120,18 +120,18 @@ def _():
         FORMATS,
         SCENE_FILES,
         SCENE_LABELS,
-        layout_controls,
         boundary_controls,
+        build_export_command,
         color_controls,
         ease,
         format_control,
+        layout_controls,
         load_scene,
         mo,
         moops,
         notebook_asset_urls,
         render_scene,
         scene_control,
-        shlex,
         state_at,
     )
 
@@ -183,7 +183,9 @@ def _(
     blocked_timeline_file.read_text()
     escalation_timeline_file.read_text()
     sequence_file.read_text()
-    scene_timelines = {name: load_scene(name) for name in SCENE_LABELS.values()}
+    scene_timelines = {
+        name: load_scene(name) for name in SCENE_LABELS.values()
+    }
     return (scene_timelines,)
 
 
@@ -203,7 +205,9 @@ def _(args, format_control, mo, scene_control):
         ),
     )
     video_format = format_control(args, default="portrait")
-    mo.hstack([scene_choice, control_mode, video_format], justify="start", gap=2)
+    mo.hstack(
+        [scene_choice, control_mode, video_format], justify="start", gap=2
+    )
     return control_mode, scene_choice, video_format
 
 
@@ -292,7 +296,9 @@ def _(args, scene_timelines):
         value=next(
             iter(
                 {
-                    f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
+                    f"{chapter['time']:g}s · {chapter['label']}": chapter[
+                        "time"
+                    ]
                     for chapter in scene_timelines["intro"]["chapters"]
                 }
             )
@@ -331,7 +337,9 @@ def _(args, scene_timelines):
         value=next(
             iter(
                 {
-                    f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
+                    f"{chapter['time']:g}s · {chapter['label']}": chapter[
+                        "time"
+                    ]
                     for chapter in scene_timelines["blocked"]["chapters"]
                 }
             )
@@ -370,7 +378,9 @@ def _(args, scene_timelines):
         value=next(
             iter(
                 {
-                    f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
+                    f"{chapter['time']:g}s · {chapter['label']}": chapter[
+                        "time"
+                    ]
                     for chapter in scene_timelines["escalation"]["chapters"]
                 }
             )
@@ -409,7 +419,9 @@ def _(args, scene_timelines):
         value=next(
             iter(
                 {
-                    f"{chapter['time']:g}s · {chapter['label']}": chapter["time"]
+                    f"{chapter['time']:g}s · {chapter['label']}": chapter[
+                        "time"
+                    ]
                     for chapter in scene_timelines["full"]["chapters"]
                 }
             )
@@ -607,14 +619,20 @@ def _(args):
 @app.cell
 def _(args, layout_controls):
     endpoint_text_size, zone_text_size, meter_spacing = layout_controls(args)
-    return endpoint_text_size, zone_text_size, meter_spacing
+    return endpoint_text_size, meter_spacing, zone_text_size
 
 
 @app.cell
-def _(args, boundary_controls):
+def _(
+    args,
+    boundary_controls,
     endpoint_text_size,
-    zone_text_size,
     meter_spacing,
+    zone_text_size,
+):
+    (endpoint_text_size,)
+    (zone_text_size,)
+    (meter_spacing,)
     reconciliation_boundary, right_zone_boundary = boundary_controls(args)
     return reconciliation_boundary, right_zone_boundary
 
@@ -636,8 +654,10 @@ def _(
     blocked_chapters,
     blocked_outcome,
     blocked_time,
+    build_export_command,
     control_mode,
     ease,
+    endpoint_text_size,
     escalation_chapters,
     escalation_time,
     far_right_peek_progress,
@@ -649,6 +669,7 @@ def _(
     isr_meter_y_offset,
     left_reveal,
     logos_reveal,
+    meter_spacing,
     mo,
     needle_color_picker,
     needle_reveal,
@@ -662,19 +683,16 @@ def _(
     potential_opacity,
     potential_position,
     preview_assets,
-    endpoint_text_size,
-    zone_text_size,
-    meter_spacing,
     reconciliation_boundary,
     render_scene,
     right_reveal,
     right_zone_boundary,
     scene_choice,
     scene_timelines,
-    shlex,
     smotrich_entry,
     state_at,
     video_format,
+    zone_text_size,
     zones_reveal,
 ):
     intro_controls = [
@@ -765,11 +783,7 @@ def _(
             zones_reveal=zones_reveal.value,
         )
     preview_width, preview_height = FORMATS[video_format.value]
-    scene_svg = render_scene(
-        scene_state,
-        assets=preview_assets,
-        width=preview_width,
-        height=preview_height,
+    render_settings = dict(
         israeli_color=isr_meter_color_picker.value,
         palestinian_color=pal_meter_color_picker.value,
         needle_color=needle_color_picker.value,
@@ -778,6 +792,19 @@ def _(
         endpoint_text_size=endpoint_text_size.value,
         zone_text_size=zone_text_size.value,
         meter_spacing=meter_spacing.value,
+    )
+    scene_svg = render_scene(
+        scene_state,
+        assets=preview_assets,
+        width=preview_width,
+        height=preview_height,
+        **render_settings,
+    )
+    export_command = build_export_command(
+        selected_scene,
+        video_format.value,
+        scene_timelines[selected_scene],
+        **render_settings,
     )
     # Fit either format on screen while retaining the exact export aspect ratio.
     preview = mo.Html(
@@ -808,15 +835,7 @@ def _(
                     reconciliation_boundary,
                     right_zone_boundary,
                     color_layout,
-                    mo.md(
-                        f"Export this format: `uv run python export_video.py --scene {selected_scene} --format {video_format.value} "
-                        f"--reconciliation-end {reconciliation_boundary.value:.2f} --right-zone-start {right_zone_boundary.value:.2f} "
-                        f"--endpoint-text-size {endpoint_text_size.value:g} --zone-text-size {zone_text_size.value:g} "
-                        f"--meter-spacing {meter_spacing.value:g} "
-                        f"--israeli-color {shlex.quote(isr_meter_color_picker.value)} "
-                        f"--palestinian-color {shlex.quote(pal_meter_color_picker.value)} "
-                        f"--needle-color {shlex.quote(needle_color_picker.value)}`"
-                    ),
+                    mo.md(f"Export this format: `{export_command}`"),
                 ]
             ),
             preview,
