@@ -65,6 +65,7 @@ def render_meter(
     )
     # Vertical reflection preserves the left-to-right needle sweep.
     needle_angle = -50 + 100 * position
+    endpoint_x_positions = (60, 540)
     label_y = 166 if upside_down else 194
     label_line_height = endpoint_text_size * 30 / 26
     zone_line_height = zone_text_size * 17 / 16
@@ -73,7 +74,7 @@ def render_meter(
         text_svg = "".join(
             f'<text opacity="{visibility}" x="{x}" y="{label_y + 30 + label_line_height * (line - (len(lines) - 1) / 2)}">'
             f"{html.escape(text)}</text>"
-            for x, lines, visibility in zip((60, 540), texts, (left_reveal, right_reveal))
+            for x, lines, visibility in zip(endpoint_x_positions, texts, (left_reveal, right_reveal))
             for line, text in enumerate(lines)
         )
         return render_text_layer(text_svg, opacity, blur, layer)
@@ -142,7 +143,7 @@ def render_meter(
     left_emphasis, right_emphasis = zone_emphasis(position, reconciliation_end, right_zone_start)
 
     def render_logo(index, uri):
-        center_x, center_y = (60, 540)[index], logo_y+40
+        center_x, center_y = endpoint_x_positions[index], logo_y+40
         emphasis = (left_emphasis, right_emphasis)[index]
         color = ("#55b98b", "#e5a044")[index]
         scale = 1 + .25*emphasis
