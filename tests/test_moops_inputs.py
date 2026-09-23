@@ -3,6 +3,7 @@
 import contextlib
 import io
 import unittest
+import xml.etree.ElementTree as ET
 from unittest.mock import patch
 
 import marimo as mo
@@ -26,6 +27,9 @@ class MoopsInputTests(unittest.TestCase):
             ("israeli_color", "isr_meter_color_picker"),
             ("palestinian_color", "pal_meter_color_picker"),
             ("needle_color", "needle_color_picker"),
+            ("endpoint_text_size", "endpoint_text_size"),
+            ("zone_text_size", "zone_text_size"),
+            ("meter_spacing", "meter_spacing"),
         ):
             self.assertEqual(getattr(options, option), values[control].value)
         state = state_at(load_scene("blocked"), 4)
@@ -37,6 +41,9 @@ class MoopsInputTests(unittest.TestCase):
                 "israeli_color",
                 "palestinian_color",
                 "needle_color",
+                "endpoint_text_size",
+                "zone_text_size",
+                "meter_spacing",
             )
         }
         self.assertEqual(
@@ -50,7 +57,10 @@ class MoopsInputTests(unittest.TestCase):
     def test_overrides_reach_notebook_render_and_export(self):
         flags = [
             "--scene",
-            "blocked",
+            "escalation",
+            "--endpoint-text-size", "32",
+            "--zone-text-size", "24",
+            "--meter-spacing", "80",
             "--format",
             "landscape",
             "--reconciliation-end",
@@ -69,8 +79,8 @@ class MoopsInputTests(unittest.TestCase):
                     [
                         "hamas_neches.py",
                         *flags,
-                        "--blocked-time",
-                        "4",
+                        "--escalation-time",
+                        "13",
                     ]
                 )
             }
@@ -80,7 +90,7 @@ class MoopsInputTests(unittest.TestCase):
         )
         self.assertEqual(values["right_zone_boundary"].value, options.right_zone_start)
         expected = render_scene(
-            state_at(load_scene("blocked"), 4),
+            state_at(load_scene("escalation"), 13),
             assets=values["preview_assets"],
             width=1920,
             height=1080,
@@ -89,8 +99,32 @@ class MoopsInputTests(unittest.TestCase):
             israeli_color=options.israeli_color,
             palestinian_color=options.palestinian_color,
             needle_color=options.needle_color,
+            endpoint_text_size=options.endpoint_text_size,
+            zone_text_size=options.zone_text_size,
+            meter_spacing=options.meter_spacing,
         )
         self.assertEqual(values["scene_svg"], expected)
+
+    def test_absolute_sizes_and_gap(self):
+        state = state_at(load_scene("escalation"), 13)
+        for israeli_y in (250, 300):
+            for gap in (0, 80, 150):
+                with self.subTest(israeli_y=israeli_y, gap=gap):
+                    svg = render_scene(
+                        dict(state, israeli_y=israeli_y, palestinian_y=0),
+                        endpoint_text_size=32, zone_text_size=24, meter_spacing=gap,
+                    )
+                    root = ET.fromstring(svg)
+                    meters = {node.get("id"): node for node in root.iter()
+                              if node.get("id") in ("israeli", "palestinian")}
+                    def offset(meter):
+                        return float(meter.get("transform").split()[1].rstrip(")"))
+                    actual_gap = (offset(meters["israeli"]) + 100
+                                  - offset(meters["palestinian"]) - 300)
+                    self.assertEqual(actual_gap, gap)
+                    for meter in meters.values():
+                        sizes = {node.get("font-size") for node in meter.iter()}
+                        self.assertTrue({"32", "24"}.issubset(sizes))
 
     def test_custom_widgets_keep_live_values_and_cli_defaults(self):
         group = moops.Group(["test", "--israeli-color", "#123456"])
@@ -107,6 +141,9 @@ class MoopsInputTests(unittest.TestCase):
     def test_reject_invalid_cli_before_export(self):
         for flags in (
             ["--unknown"],
+            ["--endpoint-text-size", "200"],
+            ["--zone-text-size", "nan"],
+            ["--meter-spacing", "-1"],
             ["--reconciliation-end", "nan"],
             ["--reconciliation-end", "0.9"],
             ["--scene", "missing"],

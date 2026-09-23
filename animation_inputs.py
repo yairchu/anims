@@ -1,6 +1,9 @@
 """One moops declaration for each input shared by preview and export."""
 
 from scene_defaults import (
+    ENDPOINT_TEXT_SIZE,
+    ZONE_TEXT_SIZE,
+    METER_SPACING,
     ISRAELI_COLOR,
     NEEDLE_COLOR,
     PALESTINIAN_COLOR,
@@ -87,4 +90,17 @@ def labeled_choice(args, labels, option, label, default):
             label=label,
             allow_select_none=default is None,
         ),
+    )
+
+
+def layout_controls(args):
+    """Absolute font sizes and arc-to-arc gap in shared scene coordinates."""
+    return tuple(
+        args.slider(low, high, step, default, option=option, label=label,
+                    help_text=label, show_value=True, full_width=True)
+        for low, high, step, default, option, label in (
+            (20, 42, 0.1, ENDPOINT_TEXT_SIZE, "--endpoint-text-size", "Endpoint font size (scene units)"),
+            (12, 29, 0.1, ZONE_TEXT_SIZE, "--zone-text-size", "Zone font size (scene units)"),
+            (0, 240, 5, METER_SPACING, "--meter-spacing", "Meter gap (scene units)"),
+        )
     )

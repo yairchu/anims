@@ -51,6 +51,25 @@ current controls. The separate export command renders the selected timeline.
 Color pickers and the Manual/Timeline radio retain their notebook UI through
 moops custom controls, with equivalent CLI inputs.
 
+## Text size and meter spacing
+
+The notebook exposes **Endpoint font size**, **Zone font size**, and **Meter gap**
+in both Manual and Timeline modes. All three use absolute scene units, which
+scale with the artwork: one unit is 1.5 pixels in a 1080×1920 export.
+Defaults are 33.8, 22.4, and 150 units, respectively.
+
+The gap is measured vertically between the centers of the two facing arcs when
+the Palestinian meter's entrance offset is zero. Changing it moves the
+Palestinian meter and its attached effects; its timeline/manual Y offset still
+controls entrance motion. Text line spacing scales with the font size.
+
+```sh
+uv run python export_video.py --scene escalation --endpoint-text-size 33.8 --zone-text-size 22.4 --meter-spacing 150
+```
+
+Endpoint size accepts 20–42 units, zone size 12–29, and meter gap 0–240.
+The displayed export command and exported JSON include these settings.
+
 ## Export
 
 Silent 25-second, 1080×1920, 30 fps portrait MP4 (white background):

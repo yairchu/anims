@@ -36,6 +36,9 @@ def _(
     political_position,
     potential_opacity,
     potential_position,
+    endpoint_text_size,
+    zone_text_size,
+    meter_spacing,
     reconciliation_boundary,
     right_reveal,
     right_zone_boundary,
@@ -76,6 +79,9 @@ def _(
         partnership_visibility,
         blocked_outcome,
         block_visibility,
+        endpoint_text_size,
+        zone_text_size,
+        meter_spacing,
         reconciliation_boundary,
         right_zone_boundary,
         isr_meter_color_picker,
@@ -92,6 +98,7 @@ def _():
     import marimo as mo
     import moops
     from animation_inputs import (
+        layout_controls,
         boundary_controls,
         color_controls,
         scene_control,
@@ -113,6 +120,7 @@ def _():
         FORMATS,
         SCENE_FILES,
         SCENE_LABELS,
+        layout_controls,
         boundary_controls,
         color_controls,
         ease,
@@ -597,7 +605,16 @@ def _(args):
 
 
 @app.cell
+def _(args, layout_controls):
+    endpoint_text_size, zone_text_size, meter_spacing = layout_controls(args)
+    return endpoint_text_size, zone_text_size, meter_spacing
+
+
+@app.cell
 def _(args, boundary_controls):
+    endpoint_text_size,
+    zone_text_size,
+    meter_spacing,
     reconciliation_boundary, right_zone_boundary = boundary_controls(args)
     return reconciliation_boundary, right_zone_boundary
 
@@ -645,6 +662,9 @@ def _(
     potential_opacity,
     potential_position,
     preview_assets,
+    endpoint_text_size,
+    zone_text_size,
+    meter_spacing,
     reconciliation_boundary,
     render_scene,
     right_reveal,
@@ -755,6 +775,9 @@ def _(
         needle_color=needle_color_picker.value,
         reconciliation_end=reconciliation_boundary.value,
         right_zone_start=right_zone_boundary.value,
+        endpoint_text_size=endpoint_text_size.value,
+        zone_text_size=zone_text_size.value,
+        meter_spacing=meter_spacing.value,
     )
     # Fit either format on screen while retaining the exact export aspect ratio.
     preview = mo.Html(
@@ -778,12 +801,17 @@ def _(
                         else ""
                     ),
                     active_controls,
+                    endpoint_text_size,
+                    zone_text_size,
+                    meter_spacing,
                     reconciliation_boundary,
                     right_zone_boundary,
                     color_layout,
                     mo.md(
                         f"Export this format: `uv run python export_video.py --scene {selected_scene} --format {video_format.value} "
                         f"--reconciliation-end {reconciliation_boundary.value:.2f} --right-zone-start {right_zone_boundary.value:.2f} "
+                        f"--endpoint-text-size {endpoint_text_size.value:g} --zone-text-size {zone_text_size.value:g} "
+                        f"--meter-spacing {meter_spacing.value:g} "
                         f"--israeli-color {shlex.quote(isr_meter_color_picker.value)} "
                         f"--palestinian-color {shlex.quote(pal_meter_color_picker.value)} "
                         f"--needle-color {shlex.quote(needle_color_picker.value)}`"

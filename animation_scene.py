@@ -4,7 +4,7 @@ import html
 import math
 from functools import lru_cache
 from pathlib import Path
-from scene_defaults import (RECONCILIATION_END, RIGHT_ZONE_START,
+from scene_defaults import (ENDPOINT_TEXT_SIZE, ZONE_TEXT_SIZE, METER_SPACING, RECONCILIATION_END, RIGHT_ZONE_START,
                             ISRAELI_COLOR, PALESTINIAN_COLOR, NEEDLE_COLOR)
 
 def meter_point(position, radius=240):
@@ -47,6 +47,8 @@ def render_meter(
     reconciliation_strength=0,
     zone_labels=(("פתח", "לפיוס"), ("חלון", "לסיפוח")),
     translated_zone_labels=None,
+    endpoint_text_size=ENDPOINT_TEXT_SIZE,
+    zone_text_size=ZONE_TEXT_SIZE,
     reveal=None,
 ):
     reveal = reveal or {}
@@ -64,10 +66,12 @@ def render_meter(
     # Vertical reflection preserves the left-to-right needle sweep.
     needle_angle = -50 + 100 * position
     label_y = 166 if upside_down else 194
+    label_line_height = endpoint_text_size * 30 / 26
+    zone_line_height = zone_text_size * 17 / 16
 
     def render_labels(texts, opacity, blur=0, layer="original"):
         text_svg = "".join(
-            f'<text opacity="{visibility}" x="{x}" y="{label_y + 15 * (3 - len(lines)) + 30 * line}">'
+            f'<text opacity="{visibility}" x="{x}" y="{label_y + 30 + label_line_height * (line - (len(lines) - 1) / 2)}">'
             f"{html.escape(text)}</text>"
             for x, lines, visibility in zip((60, 540), texts, (left_reveal, right_reveal))
             for line, text in enumerate(lines)
@@ -122,7 +126,7 @@ def render_meter(
                 y = 400-y
                 angle = -angle
             text_svg = "".join(
-                f'<text x="{x:.3f}" y="{y + 17*(line-(len(lines)-1)/2):.3f}" fill="{color}">{html.escape(text)}</text>'
+                f'<text x="{x:.3f}" y="{y + zone_line_height*(line-(len(lines)-1)/2):.3f}" fill="{color}">{html.escape(text)}</text>'
                 for line, text in enumerate(lines)
             )
             parts.append(f'<g transform="rotate({angle:.3f} {x:.3f} {y:.3f})">{text_svg}</g>')
@@ -133,7 +137,8 @@ def render_meter(
         zone_text = render_text_layer(render_zone_labels(zone_labels), 1-blend, 8*blend, "zones-original")
         zone_text += render_text_layer(render_zone_labels(translated_zone_labels), blend, 8*(1-blend), "zones-translation")
 
-    logo_y = 46 if upside_down else 274
+    label_clearance = max(0, label_line_height - 30)
+    logo_y = 46 - label_clearance if upside_down else 274 + label_clearance
     left_emphasis, right_emphasis = zone_emphasis(position, reconciliation_end, right_zone_start)
 
     def render_logo(index, uri):
@@ -171,9 +176,9 @@ def render_meter(
         <circle cx="300" cy="340" r="4" fill="white" />
         </g>
       </g>
-      <g fill="black" font-size="26" font-family="Arial, sans-serif"
+      <g fill="black" font-size="{endpoint_text_size:g}" font-family="Arial, sans-serif"
          text-anchor="middle" direction="rtl">{label_svg}</g>
-      <g opacity="{zones_reveal}" font-size="16" font-family="Arial, sans-serif" text-anchor="middle" direction="rtl"
+      <g opacity="{zones_reveal}" font-size="{zone_text_size:g}" font-family="Arial, sans-serif" text-anchor="middle" direction="rtl"
          stroke="white" stroke-width="2" stroke-opacity=".8" paint-order="stroke">{zone_text}</g>
       {logo_svg}
     </g>'''
@@ -267,13 +272,14 @@ def bezier(start, control, end, progress):
     return *point, math.degrees(math.atan2(tangent[1], tangent[0]))
 
 
-def render_events(state):
+def render_events(state, *, endpoint_text_size=26):
+    label_clearance = max(0, endpoint_text_size * 30 / 26 - 30)
     parts = []
     for event in state["events"]:
         p = event["progress"]
         if event["kind"] == "cash":
-            x, y, angle = bezier((500, state["israeli_y"]+85), (710, 270),
-                                (540, state["palestinian_y"]+86), p)
+            x, y, angle = bezier((500, state["israeli_y"]+85-label_clearance), (710, 270),
+                                (540, state["palestinian_y"]+86-label_clearance), p)
             parts.append(f'''<g transform="translate({x} {y}) rotate({angle + 90})">
               <rect x="-22" y="-13" width="44" height="26" rx="3" fill="#a8ce8d" stroke="#375a32" stroke-width="2"/>
               <rect x="-17" y="-9" width="34" height="18" rx="2" fill="none" stroke="#547746"/>
@@ -281,7 +287,7 @@ def render_events(state):
             </g>''')
         elif event["kind"] == "knife":
             # The projectile starts at Hamas's emblem, not at the Palestinian population.
-            x, y, angle = bezier((540, state["palestinian_y"]+86), (100, 280),
+            x, y, angle = bezier((540, state["palestinian_y"]+86-label_clearance), (100, 280),
                                 (345, state["israeli_y"]+230), min(1, p / .8))
             if p < .8:
                 parts.append(f'''<g transform="translate({x} {y}) rotate({angle})">
@@ -304,9 +310,14 @@ def render_events(state):
 
 def render_scene(state, *, assets=None, width=1080, height=1920, transparent=False,
                  israeli_color=ISRAELI_COLOR, palestinian_color=PALESTINIAN_COLOR, needle_color=NEEDLE_COLOR,
-                 reconciliation_end=RECONCILIATION_END, right_zone_start=RIGHT_ZONE_START):
+                 reconciliation_end=RECONCILIATION_END, right_zone_start=RIGHT_ZONE_START,
+                 endpoint_text_size=ENDPOINT_TEXT_SIZE, zone_text_size=ZONE_TEXT_SIZE,
+                 meter_spacing=METER_SPACING):
     if not 0 < reconciliation_end < right_zone_start < 1:
         raise ValueError("Zone boundaries must satisfy 0 < left < right < 1")
+    if not (20 <= endpoint_text_size <= 42 and 12 <= zone_text_size <= 29
+            and 0 <= meter_spacing <= 240):
+        raise ValueError("Text sizes or meter spacing outside supported ranges")
     assets = embedded_assets() if assets is None else assets
     # Transition cards use the same canvas/background and work with alpha export.
     if state.get("scene") == "transition":
@@ -324,7 +335,7 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
         zone_emphasis(state["israeli_position"], reconciliation_end, right_zone_start)[0],
         zone_emphasis(state["palestinian_position"], reconciliation_end, right_zone_start)[0],
     ) if mutual else 0
-    zone_options = dict(reconciliation_strength=shared_strength, reconciliation_end=reconciliation_end, right_zone_start=right_zone_start,
+    zone_options = dict(endpoint_text_size=endpoint_text_size, zone_text_size=zone_text_size, reconciliation_strength=shared_strength, reconciliation_end=reconciliation_end, right_zone_start=right_zone_start,
                         mutual_reconciliation=mutual)
     # The drawing has a stable coordinate space; changing output size never changes motion.
     view_width = max(720, 720 * width / height)
@@ -334,9 +345,12 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
     background = "" if transparent else f'<rect x="{view_x}" y="{view_y}" width="{view_width}" height="{view_height}" fill="white"/>'
     # Keep the hidden neighbour above the actual frame in both aspect ratios.
     pal_y = state["palestinian_y"] + view_y * max(0, min(1, -state["palestinian_y"] / 400))
+    # Arc centers lie at y=100 (Israeli) and y=300 (Palestinian).
+    # The Palestinian timeline/manual Y value remains its entrance offset.
+    pal_y += state["israeli_y"] - 200 - meter_spacing
     portrait_start_x = view_x + view_width + 20
     portrait_x = portrait_start_x + (430 - portrait_start_x) * state["portrait"]
-    portrait_y = state["israeli_y"] + 20
+    portrait_y = state["israeli_y"] + 20 - max(0, endpoint_text_size * 30 / 26 - 30)
     portrait = f'''<g>
       <image href="{html.escape(assets['portrait'], quote=True)}" x="{portrait_x}" y="{portrait_y}" width="140" height="140"/>
     </g>'''
@@ -362,7 +376,7 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
           fill="none" stroke="#55b98b" stroke-width="12" stroke-opacity=".25" stroke-linecap="round"/>'''
     if blocked or intro:
         portrait, pal, connection = "", "", ""
-    scene_art = "" if intro else render_blocked(state, assets) if blocked else render_events(state)
+    scene_art = "" if intro else render_blocked(state, assets) if blocked else render_events(dict(state, palestinian_y=pal_y), endpoint_text_size=endpoint_text_size)
     # A neutral visual highlight of the outcome, without inventing dialogue or motive.
     outcome = f'''<g opacity="{state['outcome']}" fill="none" stroke="{israeli_color}" stroke-width="3">
       <circle cx="300" cy="{state['israeli_y']+340}" r="20"/>

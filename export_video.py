@@ -13,6 +13,7 @@ import moops
 import resvg_py
 
 from animation_inputs import (
+    layout_controls,
     boundary_controls,
     color_controls,
     format_control,
@@ -28,7 +29,11 @@ def parse_options(argv=None):
     group = moops.Group(argv)
     reconciliation_end, right_zone_start = boundary_controls(group)
     israeli_color, palestinian_color, needle_color = color_controls(group)
+    endpoint_text_size, zone_text_size, meter_spacing = layout_controls(group)
     controls = dict(
+        endpoint_text_size=endpoint_text_size,
+        zone_text_size=zone_text_size,
+        meter_spacing=meter_spacing,
         reconciliation_end=reconciliation_end,
         right_zone_start=right_zone_start,
         israeli_color=israeli_color,
@@ -80,6 +85,10 @@ def parse_options(argv=None):
     args = SimpleNamespace(
         **{name: control.value for name, control in controls.items()}
     )
+    for name in ("endpoint_text_size", "zone_text_size", "meter_spacing"):
+        if not math.isfinite(getattr(args, name)):
+            option = name.replace("_", "-")
+            raise ValueError(f"--{option} must be finite")
     if args.timeline and args.scene is not None:
         raise ValueError("Use either --scene or --timeline, not both")
     if not args.output:
@@ -145,6 +154,9 @@ def main():
                 needle_color=args.needle_color,
                 reconciliation_end=args.reconciliation_end,
                 right_zone_start=args.right_zone_start,
+                endpoint_text_size=args.endpoint_text_size,
+                zone_text_size=args.zone_text_size,
+                meter_spacing=args.meter_spacing,
             )
             return rasterize(svg)
 
@@ -235,6 +247,9 @@ def main():
                     "transparent": args.transparent,
                     "reconciliation_end": args.reconciliation_end,
                     "right_zone_start": args.right_zone_start,
+                    "endpoint_text_size": args.endpoint_text_size,
+                    "zone_text_size": args.zone_text_size,
+                    "meter_spacing": args.meter_spacing,
                 },
                 indent=2,
             )
