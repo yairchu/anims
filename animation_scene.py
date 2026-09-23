@@ -65,7 +65,7 @@ def render_meter(
     )
     # Vertical reflection preserves the left-to-right needle sweep.
     needle_angle = -50 + 100 * position
-    endpoint_x_positions = (60, 540)
+    endpoint_x_positions = (30, 570)
     label_y = 166 if upside_down else 194
     label_line_height = endpoint_text_size * 30 / 26
     zone_line_height = zone_text_size * 17 / 16
@@ -138,7 +138,7 @@ def render_meter(
         zone_text = render_text_layer(render_zone_labels(zone_labels), 1-blend, 8*blend, "zones-original")
         zone_text += render_text_layer(render_zone_labels(translated_zone_labels), blend, 8*(1-blend), "zones-translation")
 
-    label_clearance = max(0, label_line_height - 30)
+    label_clearance = max(0, label_line_height - 20)
     logo_y = 46 - label_clearance if upside_down else 274 + label_clearance
     left_emphasis, right_emphasis = zone_emphasis(position, reconciliation_end, right_zone_start)
 
@@ -146,7 +146,7 @@ def render_meter(
         center_x, center_y = endpoint_x_positions[index], logo_y+40
         emphasis = (left_emphasis, right_emphasis)[index]
         color = ("#55b98b", "#e5a044")[index]
-        scale = 1 + .25*emphasis
+        scale = 1 + emphasis
         # Both left icons receive the same extra glow as the shared opportunity grows.
         glow = .55*emphasis + (.30*reconciliation_strength if index == 0 else 0)
         filter_id = f"{meter_id}-logo-{index}-zone-glow"
@@ -316,9 +316,6 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
                  meter_spacing=METER_SPACING):
     if not 0 < reconciliation_end < right_zone_start < 1:
         raise ValueError("Zone boundaries must satisfy 0 < left < right < 1")
-    if not (20 <= endpoint_text_size <= 42 and 12 <= zone_text_size <= 29
-            and 0 <= meter_spacing <= 240):
-        raise ValueError("Text sizes or meter spacing outside supported ranges")
     assets = embedded_assets() if assets is None else assets
     # Transition cards use the same canvas/background and work with alpha export.
     if state.get("scene") == "transition":
@@ -351,7 +348,7 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
     pal_y += state["israeli_y"] - 200 - meter_spacing
     portrait_start_x = view_x + view_width + 20
     portrait_x = portrait_start_x + (430 - portrait_start_x) * state["portrait"]
-    portrait_y = state["israeli_y"] + 20 - max(0, endpoint_text_size * 30 / 26 - 30)
+    portrait_y = state["israeli_y"] - max(0, endpoint_text_size * 30 / 26 - 30)
     portrait = f'''<g>
       <image href="{html.escape(assets['portrait'], quote=True)}" x="{portrait_x}" y="{portrait_y}" width="140" height="140"/>
     </g>'''
