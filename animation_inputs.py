@@ -102,7 +102,7 @@ def layout_controls(args):
         for low, high, step, default, option, label in (
             (20, 42, 0.1, ENDPOINT_TEXT_SIZE, "--endpoint-text-size", "Endpoint font size (scene units)"),
             (12, 29, 0.1, ZONE_TEXT_SIZE, "--zone-text-size", "Zone font size (scene units)"),
-            (0, 240, 5, METER_SPACING, "--meter-spacing", "Meter gap (scene units)"),
+            (0, 300, 5, METER_SPACING, "--meter-spacing", "Meter gap (scene units)"),
         )
     )
 
