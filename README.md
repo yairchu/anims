@@ -1,5 +1,69 @@
 # Political spectrum animation
 
+## Tunnels · 2014 → 2026
+
+The second video has its own notebook and artwork, sharing the timeline engine,
+asset serving, playback preview, and video exporter:
+
+```sh
+uv run marimo edit tunnels_2014.py
+```
+
+Bennett stays on the right throughout. The 34-second first cut establishes the
+2014 hierarchy, introduces the tunnel information and missing cabinet briefing,
+animates Bennett's direct contact with Winter, returns the information to Bennett,
+and highlights the cabinet when Bennett raises the threat. At 24 seconds the
+portraits rearrange into the 2026 split, with Netanyahu's grouping on the left.
+Dashed contemporary links represent the author's political grouping.
+
+Choose **Full animation**, **2014 · information bypass**, or **Transition + 2026**;
+the scrubber and chapter selector use seconds within the selected clip. **Manual**
+mode exposes each reveal, information transfer, surprise, and rearrangement.
+Manual values affect the preview only. The export command always renders the
+selected timeline clip. **Download this frame** saves a portable SVG with images
+embedded, including manual adjustments.
+
+**Instagram / Shorts portrait, 1080×1920 (9:16), is the default** in the notebook,
+playback preview, and exporter. The portrait composition uses larger faces and
+text, a taller 2014 hierarchy, and vertically stacked Gantz/Winter portraits in
+2026, each linked directly to Netanyahu. Bennett stays on the right throughout.
+The year/title header and bottom narration text are omitted. The portrait diagram
+is shifted upward, leaving approximately the bottom 500 pixels of a 1080×1920
+export clear for captions added in your video editor.
+Landscape and a **960×1080 half-screen panel** remain available for other edits. Turn on **Transparent background** for ProRes
+4444 output. The notebook displays the exact matching export command.
+
+```sh
+# Playback with chapter jumps and speed controls
+uv run python animation_preview.py --scene tunnels
+
+# Full animation
+uv run python export_video.py --scene tunnels --output output/tunnels-full.mp4
+
+# Separate clips for editing
+uv run python export_video.py --scene tunnels --start 0 --end 24 --output output/tunnels-2014.mp4
+uv run python export_video.py --scene tunnels --start 24 --end 34 --output output/tunnels-2026.mp4
+
+# Transparent half-screen panel
+uv run python export_video.py --scene tunnels --width 960 --height 1080 --transparent --output output/tunnels-panel.mov
+```
+
+`timeline_tunnels.json` contains timing, chapter markers, clip boundaries, editable
+Hebrew diagram labels/2026 role labels, and source notes. It reloads automatically in
+the notebook. The timings are an editable first cut, not synchronization to the
+source edit. `tunnels_scene.py` contains the diagram geometry. Portrait assets
+are `netanyahu.png`, `bennett.png`, `gantz.png`, and `winter.png`; replacing a
+portrait takes effect after rerunning the notebook's asset-loading cell.
+Generation prompts and provenance for the three new portraits are in
+`tunnels_portraits.md`. The original video retains its own scene selector and
+sequence.
+
+```sh
+uv run marimo check tunnels_2014.py
+uv run python tunnels_2014.py
+uv run python tunnels_2014.py --clip 2026 --time 5 --format panel --transparent
+```
+
 The notebook has one preview with **Scene**, **Manual / Timeline**, and **Video format** controls. It opens on the meter-introduction timeline. Both modes use the same scene renderer as export. In a live notebook, SVG frames refer to images served by marimo rather than embedding their bytes. An independent asset-loading cell keeps the URLs alive across scrubbing; rerun that cell after replacing portraits. Script/static exports retain marimo’s portable data-URL fallback.
 
 ## Setup

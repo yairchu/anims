@@ -60,10 +60,10 @@ def color_controls(args):
     )
 
 
-def scene_control(args, *, default=None):
+def scene_control(args, *, default=None, labels=None):
     from animation_timeline import SCENE_LABELS
 
-    return labeled_choice(args, SCENE_LABELS, "--scene", "Scene", default)
+    return labeled_choice(args, SCENE_LABELS if labels is None else labels, "--scene", "Scene", default)
 
 
 def format_control(args, *, default=None):

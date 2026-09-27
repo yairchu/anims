@@ -108,7 +108,7 @@ def _():
     from animation_timeline import (
         DEFAULT_TIMELINE,
         SCENE_FILES,
-        SCENE_LABELS,
+        METER_SCENE_LABELS as SCENE_LABELS,
         ease,
         load_scene,
         state_at,
@@ -190,8 +190,8 @@ def _(
 
 
 @app.cell
-def _(args, format_control, mo, scene_control):
-    scene_choice = scene_control(args, default="intro")
+def _(SCENE_LABELS, args, format_control, mo, scene_control):
+    scene_choice = scene_control(args, default="intro", labels=SCENE_LABELS)
     control_mode = args.custom(
         args.dropdown(
             ["Manual", "Timeline"],

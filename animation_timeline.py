@@ -4,8 +4,10 @@ import math
 from pathlib import Path
 
 DEFAULT_TIMELINE = Path(__file__).with_name("timeline.json")
-SCENE_LABELS = {"Meter introduction": "intro", "Blocked partnership": "blocked", "Escalation": "escalation", "Full sequence": "full"}
-SCENE_FILES = {"intro": "timeline_intro.json", "blocked": "timeline_blocked.json", "escalation": "timeline.json"}
+METER_SCENE_LABELS = {"Meter introduction": "intro", "Blocked partnership": "blocked", "Escalation": "escalation", "Full sequence": "full"}
+SCENE_LABELS = METER_SCENE_LABELS | {"Tunnels · 2014 → 2026": "tunnels"}
+SCENE_FILES = {"intro": "timeline_intro.json", "blocked": "timeline_blocked.json", "escalation": "timeline.json", "tunnels": "timeline_tunnels.json"}
+TUNNEL_TRACKS = {"hierarchy", "knowledge", "withheld", "question", "request", "disclosure", "surprise", "cabinet_update", "modern", "alignment"}
 REVEAL_TRACKS = {"left_reveal", "right_reveal", "arc_reveal", "needle_reveal", "logos_reveal", "zones_reveal"}
 BLOCKED_TRACKS = {"potential_position", "potential_opacity", "netanyahu", "abbas", "smotrich", "partnership", "block"}
 TRACKS = {"israeli_position", "palestinian_position", "israeli_y", "palestinian_y",
@@ -38,8 +40,9 @@ def load_timeline(path=DEFAULT_TIMELINE):
     scene = data.get("scene", "escalation")
     if scene not in SCENE_FILES:
         raise ValueError(f"Unknown scene: {scene}")
-    required = TRACKS | (BLOCKED_TRACKS if scene == "blocked" else REVEAL_TRACKS if scene == "intro" else set())
-    if not required <= set(data["tracks"]) or set(data["tracks"]) - required - REVEAL_TRACKS:
+    required = TUNNEL_TRACKS if scene == "tunnels" else TRACKS | (BLOCKED_TRACKS if scene == "blocked" else REVEAL_TRACKS if scene == "intro" else set())
+    optional = set() if scene == "tunnels" else REVEAL_TRACKS
+    if not required <= set(data["tracks"]) or set(data["tracks"]) - required - optional:
         raise ValueError(f"Timeline must define these tracks: {sorted(required)}")
     for name, keys in data["tracks"].items():
         if not keys or keys[0][0] != 0:
@@ -62,6 +65,10 @@ def load_timeline(path=DEFAULT_TIMELINE):
         if not (math.isfinite(chapter["time"]) and 0 <= chapter["time"] <= data["duration"]
                 and isinstance(chapter["label"], str)):
             raise ValueError("Chapters need a label and a time within the timeline")
+    for clip in data.get("clips", {}).values():
+        start, end = clip["start"], clip["end"]
+        if not (math.isfinite(start) and math.isfinite(end) and 0 <= start < end <= data["duration"]):
+            raise ValueError("Clips must fit within the timeline")
     return data
 
 
@@ -86,6 +93,8 @@ def state_at(timeline, time):
                 return state
     state = {name: sample(keys, time) for name, keys in timeline["tracks"].items()}
     state["scene"] = timeline.get("scene", "escalation")
+    if state["scene"] == "tunnels":
+        state["labels"] = timeline.get("labels", {})
     state["events"] = [dict(event, progress=(time - event["start"]) / event["duration"])
                        for event in timeline["events"]
                        if event["start"] <= time < event["start"] + event["duration"]]

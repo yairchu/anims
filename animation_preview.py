@@ -14,7 +14,7 @@ from animation_timeline import SCENE_LABELS, load_scene, state_at
 
 ROOT = Path(__file__).parent
 
-HTML = '''<!doctype html><meta charset="utf-8"><title>Political meters · animation preview</title>
+HTML = '''<!doctype html><meta charset="utf-8"><title>Animation preview</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#e9e9ed;font:15px system-ui;color:#24242a}
 #stage{line-height:0;margin:auto;max-width:1200px;background:white}#stage svg{width:100%;height:auto}
@@ -27,7 +27,7 @@ nav{max-width:1200px;margin:16px auto;padding:0 16px}button,select{font:inherit;
 <output id="time"></output><input id="seek" aria-label="Timeline time" type="range" min="0" step="0.01">
 <div id="chapters"></div><p>Edit the selected scene’s timeline JSON, then reload. <code id="export-command"></code></p></nav>
 <script>
-let config, time=0, playing=false, last=0, busy=false, revision=0, selectionRevision=0;
+let config, time=0, playing=false, last=0, busy=false, revision=0, selectionRevision=0, formatInitialized=false;
 const positions={}, scene=document.querySelector('#scene');
 const stage=document.querySelector('#stage'), seek=document.querySelector('#seek'), button=document.querySelector('#play');
 async function draw(t){
@@ -62,6 +62,10 @@ async function selectScene(){
   const result=await(await fetch('/config?scene='+encodeURIComponent(scene.value))).json();
   if(mine!==selectionRevision)return;
   config=result; seek.max=config.duration; time=positions[scene.value]||0;
+  if(!formatInitialized){
+    document.querySelector('#format').value=config.width>config.height?'landscape':'portrait';
+    formatInitialized=true;
+  }
   document.querySelector('#chapters').replaceChildren();
   for(const chapter of config.chapters){const b=document.createElement('button');b.textContent=chapter.label;
     b.onclick=()=>{pause();time=chapter.time;draw(time)};document.querySelector('#chapters').append(b)}

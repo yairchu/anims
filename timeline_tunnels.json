@@ -1,0 +1,250 @@
+{
+  "scene": "tunnels",
+  "duration": 34,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "tracks": {
+    "hierarchy": [
+      [
+        0,
+        0
+      ],
+      [
+        3,
+        1
+      ]
+    ],
+    "knowledge": [
+      [
+        0,
+        0
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        5,
+        1
+      ]
+    ],
+    "withheld": [
+      [
+        0,
+        0
+      ],
+      [
+        6,
+        0
+      ],
+      [
+        7,
+        1
+      ]
+    ],
+    "question": [
+      [
+        0,
+        0
+      ],
+      [
+        8.5,
+        0
+      ],
+      [
+        9,
+        1
+      ],
+      [
+        11,
+        1
+      ],
+      [
+        12,
+        0
+      ]
+    ],
+    "request": [
+      [
+        0,
+        0
+      ],
+      [
+        10,
+        0
+      ],
+      [
+        12.5,
+        1
+      ]
+    ],
+    "disclosure": [
+      [
+        0,
+        0
+      ],
+      [
+        14,
+        0
+      ],
+      [
+        17,
+        1
+      ]
+    ],
+    "surprise": [
+      [
+        0,
+        0
+      ],
+      [
+        16.5,
+        0
+      ],
+      [
+        17.2,
+        1
+      ],
+      [
+        18.5,
+        1
+      ],
+      [
+        19.5,
+        0
+      ]
+    ],
+    "cabinet_update": [
+      [
+        0,
+        0
+      ],
+      [
+        19,
+        0
+      ],
+      [
+        20.5,
+        1
+      ]
+    ],
+    "modern": [
+      [
+        0,
+        0
+      ],
+      [
+        24,
+        0
+      ],
+      [
+        27,
+        1
+      ]
+    ],
+    "alignment": [
+      [
+        0,
+        0
+      ],
+      [
+        27,
+        0
+      ],
+      [
+        28.5,
+        1
+      ]
+    ]
+  },
+  "events": [],
+  "chapters": [
+    {
+      "time": 0,
+      "label": "Opening"
+    },
+    {
+      "time": 3,
+      "label": "2014 · the hierarchy"
+    },
+    {
+      "time": 5,
+      "label": "The tunnel information"
+    },
+    {
+      "time": 7,
+      "label": "The cabinet is not briefed"
+    },
+    {
+      "time": 9,
+      "label": "Bennett has questions"
+    },
+    {
+      "time": 12.5,
+      "label": "Bennett contacts Winter"
+    },
+    {
+      "time": 15.5,
+      "label": "Winter shares the information"
+    },
+    {
+      "time": 17.5,
+      "label": "Bennett is surprised"
+    },
+    {
+      "time": 21,
+      "label": "Bennett raises it in cabinet"
+    },
+    {
+      "time": 24,
+      "label": "Transition to 2026"
+    },
+    {
+      "time": 29,
+      "label": "2026 · the new grouping"
+    }
+  ],
+  "clips": {
+    "full": {
+      "label": "Full animation",
+      "start": 0,
+      "end": 34
+    },
+    "2014": {
+      "label": "2014 · information bypass",
+      "start": 0,
+      "end": 24
+    },
+    "2026": {
+      "label": "Transition + 2026",
+      "start": 24,
+      "end": 34
+    }
+  },
+  "labels": {
+    "camp_2026": "מחנה נתניהו",
+    "opposition_2026": "מול נתניהו",
+    "gantz_2026": "ראש מפלגה",
+    "winter_2026": "ראש מפלגה",
+    "bennett_2026": "ראש מפלגה"
+  },
+  "notes": [
+    "First-cut timing; align to the narration during editing. Times are seconds within the animation, not the source video.",
+    "2014 is a simplified hierarchy: defense minister and intervening command levels are not individually drawn.",
+    "The direct contact follows Winter's account in vinter_bennet_comp.mp4 (around 00:40–00:58). Surprise and the subsequent cabinet briefing are separate beats.",
+    "2026 is the author's political grouping, represented with dashed links rather than military reporting lines. Party labels and grouping captions are editable here."
+  ],
+  "sources": [
+    {
+      "label": "Winter's interview in the supplied edit",
+      "file": "vinter_bennet_comp.mp4",
+      "start": 40,
+      "end": 58
+    },
+    {
+      "label": "Ynet · cabinet minutes / comptroller findings",
+      "url": "https://www.ynetnews.com/articles/0,7340,L-4928735,00.html"
+    }
+  ]
+}

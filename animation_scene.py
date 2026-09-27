@@ -191,7 +191,8 @@ ASSET_FILES = {
 }
 
 
-ACTOR_FILES = {"netanyahu": "netanyahu.png", "abbas": "mansur_abbas.png", "smotrich": "smotrich.png"}
+ACTOR_FILES = {"netanyahu": "netanyahu.png", "abbas": "mansur_abbas.png", "smotrich": "smotrich.png",
+               "bennett": "bennett.png", "gantz": "gantz.png", "winter": "winter.png"}
 
 
 def available_asset_files():
@@ -199,7 +200,7 @@ def available_asset_files():
                           if Path(__file__).with_name(filename).is_file()}
 
 
-def notebook_asset_urls():
+def notebook_asset_urls(names=None):
     """Serve assets through marimo's file endpoint, once per asset-loading cell.
 
     This is the same virtual-file helper used by mo.image. In script/static
@@ -209,7 +210,8 @@ def notebook_asset_urls():
 
     return {name: mo_data.image(Path(__file__).with_name(filename).read_bytes(),
                                 ext=Path(filename).suffix).url
-            for name, filename in available_asset_files().items()}
+            for name, filename in available_asset_files().items()
+            if names is None or name in names}
 
 
 def embedded_assets():
@@ -314,6 +316,11 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
                  reconciliation_end=RECONCILIATION_END, right_zone_start=RIGHT_ZONE_START,
                  endpoint_text_size=ENDPOINT_TEXT_SIZE, zone_text_size=ZONE_TEXT_SIZE,
                  meter_spacing=METER_SPACING):
+    if state.get("scene") == "tunnels":
+        from tunnels_scene import render_tunnels
+
+        return render_tunnels(state, assets=embedded_assets() if assets is None else assets,
+                              width=width, height=height, transparent=transparent)
     if not 0 < reconciliation_end < right_zone_start < 1:
         raise ValueError("Zone boundaries must satisfy 0 < left < right < 1")
     assets = embedded_assets() if assets is None else assets
