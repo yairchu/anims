@@ -1,5 +1,20 @@
 # Political spectrum animation
 
+## Phone notification overlay
+
+`uv run marimo edit phone_notification.py` opens the transparent Reels-style
+phone sketch. The iPhone-style crew-list banner arrives at 2 seconds and is
+swiped upward at 6.3 seconds. Add your own video underneath in Final Cut.
+
+```sh
+uv run python export_video.py --scene phone --transparent --output output/phone-overlay.mov
+uv run python animation_preview.py --scene phone
+```
+
+See [phone_overlay.md](phone_overlay.md) for compositing geometry, the video
+matte, and timing edits. The default portrait export leaves the bottom 500
+pixels clear for captions. `timeline_phone.json` controls text and timing.
+
 ## Tunnels · 2014 → 2026
 
 The second video has its own notebook and artwork, sharing the timeline engine,

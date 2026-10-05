@@ -316,6 +316,10 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
                  reconciliation_end=RECONCILIATION_END, right_zone_start=RIGHT_ZONE_START,
                  endpoint_text_size=ENDPOINT_TEXT_SIZE, zone_text_size=ZONE_TEXT_SIZE,
                  meter_spacing=METER_SPACING):
+    if state.get("scene") == "phone":
+        from phone_scene import render_phone
+
+        return render_phone(state, width=width, height=height, transparent=transparent)
     if state.get("scene") == "tunnels":
         from tunnels_scene import render_tunnels
 

@@ -1,0 +1,27 @@
+{
+  "scene": "phone",
+  "duration": 10,
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "labels": {
+    "app": "בדיקת צוותים",
+    "title": "רשימת צוות לבדיקה",
+    "body": "טיסה נכנסת • ממתינה לבדיקה",
+    "account": "good.dog.club",
+    "caption": "Just another day at the skatepark."
+  },
+  "tracks": {
+    "notification_in": [[0, 0], [2, 0], [2.48, 1]],
+    "dismiss": [[0, 0], [6.3, 0], [6.68, 1]],
+    "touch": [[0, 0], [6.08, 0], [6.2, 1], [6.42, 1], [6.64, 0]]
+  },
+  "events": [],
+  "chapters": [
+    {"time": 0, "label": "Reels · transparent video window"},
+    {"time": 2, "label": "Notification slides down"},
+    {"time": 3, "label": "Hold · crew list waiting"},
+    {"time": 6.1, "label": "Touch and swipe upward"},
+    {"time": 7, "label": "Back to the reel"}
+  ]
+}
