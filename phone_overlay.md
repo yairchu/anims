@@ -16,6 +16,18 @@ Apple distinguishes notification banners from the Lock Screen and Notification C
 
 ## First-cut timing
 
+To change text, open `uv run marimo edit phone_notification.py`. The notebook has
+fields for **Account name**, **Post text**, **Notification app name**,
+**Notification title**, and **Notification message**. Edits appear in the preview
+after you submit the field (Enter or leaving the field). Scrub to 3 seconds to see
+the notification. Keep text concise enough to fit the single-line fields.
+
+Click **Save text for export** to persist the fields to `timeline_phone.json`,
+then rerun the export command with `--overwrite` to update the MOV. Saving text
+does not regenerate existing videos. The account initial and audio attribution
+follow the account name automatically. You can also edit the five entries under
+`labels` in the JSON file directly; the notebook watches that file for changes.
+
 | Seconds | Action |
 | --- | --- |
 | 0–2 | Reel interface; your video plays underneath. |
