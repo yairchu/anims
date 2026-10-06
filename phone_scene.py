@@ -1,7 +1,11 @@
 """Vector phone overlay. No video is baked into the transparent screen aperture."""
 
+import base64
 import math
+import struct
+from functools import cache
 from html import escape
+from pathlib import Path
 
 # Canonical 720 × 1280 composition; multiply by 1.5 for the default export.
 VIDEO_RECT = (150, 144, 420, 700)
@@ -27,6 +31,26 @@ def icon(kind, x, y, size=28, color="white", filled=False):
         "music": '<path d="M9 18V5l11-3v13M9 9l11-3"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="15" rx="3" ry="2"/>',
     }
     return f'<g transform="translate({x} {y}) scale({size/24})" stroke="{color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="{color if filled else "none"}">{paths[kind]}</g>'
+
+
+# phone_hand.png comes from tools/extract_phone_hand.py: its crop origin and the
+# mockup's phone outline, in source pixels, map that outline onto the bezel below.
+HAND_CROP_ORIGIN = (0, 555)
+HAND_SOURCE_PHONE = (221, 186, 731, 1197)
+PHONE_OUTLINE = (138, 38, 582, 942)
+
+
+@cache
+def hand_image():
+    png = Path(__file__).with_name("phone_hand.png").read_bytes()
+    data = base64.b64encode(png).decode()
+    (sx0, sy0, sx1, sy1), (x0, y0, x1, y1) = HAND_SOURCE_PHONE, PHONE_OUTLINE
+    scale_x, scale_y = (x1 - x0) / (sx1 - sx0), (y1 - y0) / (sy1 - sy0)
+    crop_x, crop_y = HAND_CROP_ORIGIN
+    width, height = struct.unpack(">II", png[16:24])  # PNG header
+    return (f'<image href="data:image/png;base64,{data}" preserveAspectRatio="none" '
+            f'x="{x0 + (crop_x - sx0) * scale_x:.2f}" y="{y0 + (crop_y - sy0) * scale_y:.2f}" '
+            f'width="{width * scale_x:.2f}" height="{height * scale_y:.2f}"/>')
 
 
 def video_matte(width=1080, height=1920):
@@ -61,6 +85,8 @@ def render_phone(state, *, width=1080, height=1920, transparent=True):
         parts.append('<rect x="150" y="144" width="420" height="700" fill="#71887d"/>')
         parts.append(text(360, 442, "YOUR VIDEO HERE", 20, text_anchor="middle", font_weight="700"))
         parts.append(text(360, 469, "Transparent in the MOV export", 13, text_anchor="middle"))
+    # Behind the phone: the hand wraps around it from the back.
+    parts.append(hand_image())
     parts.append('''<g font-family="Arial, sans-serif">
       <rect x="134" y="189" width="5" height="40" rx="2" fill="#44464d"/>
       <rect x="134" y="246" width="5" height="65" rx="2" fill="#44464d"/>

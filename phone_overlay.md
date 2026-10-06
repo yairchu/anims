@@ -8,6 +8,9 @@ Apple distinguishes notification banners from the Lock Screen and Notification C
 
 - `phone_notification.py`: scrubber notebook with a checkerboard preview and SVG download.
 - `phone_scene.py`: native SVG artwork, with a genuinely transparent video window.
+- `phone_hand.png`: the hand holding the phone, drawn behind it; cut out of an illustrated
+  mockup on black (`phone_hand_source.png`) by `tools/extract_phone_hand.py`; see its
+  docstring to regenerate.
 - `timeline_phone.json`: timing and text, watched by the notebook.
 - `output/phone-overlay.mov`: 1080 × 1920, 30 fps, 10 seconds, ProRes 4444 with alpha; silent.
 - `output/phone-preview.mp4`: opaque reference preview; the placeholder is not in the MOV.
@@ -61,7 +64,7 @@ Use a 1080 × 1920 project and place the MOV above your dog video at its native 
 
 The aperture, measured from the canvas's top-left corner, is **x=225, y=216, width=630, height=1050 pixels**. Its center is **(540, 741)**. The supplied matte represents exactly this rectangle. The visible aperture has square corners because the phone's curved ends are covered by opaque status/navigation bars. Slight overlap behind those bars can hide subpixel edges.
 
-The phone ends around y=1413, leaving approximately the bottom 500 pixels clear for captions. Keep the dog clip masked when adding a background behind the entire composition.
+The phone ends around y=1413. Below it, the hand and wrist run to the bottom-left corner, so captions fit best at the bottom right. Keep the dog clip masked when adding a background behind the entire composition.
 
 The PNG still and SVG are also transparent. Checkerboard in the notebook is only a preview aid, never burned into exported artwork. Final Cut should read the MOV's alpha automatically; if compositing edges look wrong, inspect alpha interpretation before adding keys or effects.
 
