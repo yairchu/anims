@@ -39,7 +39,10 @@ def render_phone(state, *, width=1080, height=1920, transparent=True):
     entered = state.get("notification_in", 0)
     dismiss = state.get("dismiss", 0)
     touch = state.get("touch", 0)
-    banner_y = -160 + 260 * entered - 280 * dismiss
+    # Scaled about the banner's top center so it grows down over the video.
+    scale = state.get("notification_scale", 1)
+    travel = 116 * scale + 144
+    banner_y = 100 - travel * (1 - entered) - (travel + 20) * dismiss
     parts = [f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 720 1280">
     <defs>
       <clipPath id="screen"><rect x="150" y="50" width="420" height="880" rx="48"/></clipPath>
@@ -97,8 +100,10 @@ def render_phone(state, *, width=1080, height=1920, transparent=True):
         parts.append(icon(kind, x, 861, 25))
     parts.append('<circle cx="526" cy="875" r="13" fill="#94887c"/><circle cx="526" cy="871" r="4" fill="#ddd4c8"/><path d="M518 882q8-12 16 0" fill="#ddd4c8"/>')
     parts.append('<rect x="301" y="915" width="118" height="4" rx="2" fill="white"/>')
+    # Drawn above the bezel, unclipped, so a scaled-up banner can overhang the phone.
+    parts.append('</g>')
     if entered > 0 and dismiss < 1:
-        parts.append(f'<g id="notification" transform="translate(0 {banner_y:.3f})">')
+        parts.append(f'<g id="notification" transform="translate(360 {banner_y:.3f}) scale({scale:.3f}) translate(-360 0)">')
         parts.append('<rect x="162" y="5" width="396" height="116" rx="25" fill="#000" opacity=".28" filter="url(#shadow)"/>')
         parts.append('<rect x="162" width="396" height="116" rx="25" fill="url(#glass)" stroke="white" stroke-opacity=".55"/>')
         parts.append('<rect x="510" y="17" width="32" height="32" rx="8" fill="#3977dc"/>')
@@ -109,6 +114,6 @@ def render_phone(state, *, width=1080, height=1920, transparent=True):
         parts.append(text(360, 94, labels.get("body", "טיסה נכנסת • ממתינה לבדיקה"), 18, "#34343c", direction="rtl", text_anchor="middle"))
         parts.append('</g>')
     if touch > 0:
-        parts.append(f'<circle id="touch" cx="371" cy="{205-260*dismiss:.3f}" r="17" fill="white" fill-opacity=".22" stroke="white" stroke-width="2" opacity="{touch:.3f}"/>')
-    parts.append('</g></g></svg>')
+        parts.append(f'<circle id="touch" cx="371" cy="{100+105*scale-(travel+20)*dismiss:.3f}" r="{17*scale:.3f}" fill="white" fill-opacity=".22" stroke="white" stroke-width="2" opacity="{touch:.3f}"/>')
+    parts.append('</g></svg>')
     return "".join(parts)

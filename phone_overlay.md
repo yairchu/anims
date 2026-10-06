@@ -22,7 +22,13 @@ fields for **Account name**, **Post text**, **Notification app name**,
 after you submit the field (Enter or leaving the field). Scrub to 3 seconds to see
 the notification. Keep text concise enough to fit the single-line fields.
 
-Click **Save text for export** to persist the fields to `timeline_phone.json`,
+The **Notification size** slider scales the banner from its top center (1 =
+phone-accurate, up to 1.8, the full canvas width). For an illustrated look, the
+banner is drawn over the phone frame and can overhang it. The size is saved with
+the text as `notification_scale` in `timeline_phone.json`, and presets don't
+store it.
+
+Click **Save text and size for export** to persist the fields to `timeline_phone.json`,
 then rerun the export command with `--overwrite` to update the MOV. Saving text
 does not regenerate existing videos. The account initial and audio attribution
 follow the account name automatically. You can also edit the five entries under
@@ -33,7 +39,7 @@ The text controls now use **moops presets**. Enter a preset name and click
 preset to restore its text in the preview; the panel also supports renaming.
 Presets are stored in `phone_notification_presets.json` next to the notebook.
 Saving or selecting a preset does not change animation timing or the export
-timeline. Click **Save text for export** when you want the selected text used in
+timeline. Click **Save text and size for export** when you want the selected text used in
 the next video render. The time scrubber is not part of a preset.
 
 | Seconds | Action |
