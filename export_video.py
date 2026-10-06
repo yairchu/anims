@@ -111,60 +111,31 @@ def parse_options(argv=None):
     return args
 
 
-def main():
-    args = parse_options()
-    config = load_scene(args.scene, args.timeline)
-    preset_width, preset_height = (
-        FORMATS[args.format] if args.format else (config["width"], config["height"])
-    )
-    width = args.width if args.width is not None else preset_width
-    height = args.height if args.height is not None else preset_height
-    fps = args.fps if args.fps is not None else config["fps"]
-    end = args.end if args.end is not None else config["duration"]
-    if width <= 0 or height <= 0 or width % 2 or height % 2:
-        raise ValueError("Width and height must be positive even integers")
-    if (
-        not math.isfinite(fps)
-        or fps <= 0
-        or not 0 <= args.start < end <= config["duration"]
-    ):
-        raise ValueError("Use a positive fps and 0 <= start < end <= timeline duration")
-    suffix = ".mov" if args.transparent else ".mp4"
-    if args.output.suffix.lower() != suffix:
+def encode_video(draw_svg, *, output, fps, start, end, transparent=False,
+                 overwrite=False, stills=None, chapters=()):
+    """Rasterize draw_svg(time) for each frame and encode an MP4 or alpha MOV."""
+    suffix = ".mov" if transparent else ".mp4"
+    if output.suffix.lower() != suffix:
         raise ValueError(f"This export mode requires a {suffix} output")
-    if args.output.exists() and not args.overwrite:
+    if output.exists() and not overwrite:
         raise ValueError("Output already exists; use --overwrite to replace it")
     if not shutil.which("ffmpeg"):
         raise ValueError("FFmpeg is required (on macOS: brew install ffmpeg)")
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    frames = math.ceil((end - args.start) * fps)
-    with tempfile.TemporaryDirectory(dir=args.output.parent) as tmp:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    frames = math.ceil((end - start) * fps)
+    with tempfile.TemporaryDirectory(dir=output.parent) as tmp:
 
         @lru_cache(maxsize=2)
         def rasterize(svg):
             return resvg_py.svg_to_bytes(svg_string=svg, font_family="Arial")
 
         def draw(time):
-            svg = render_scene(
-                state_at(config, time),
-                width=width,
-                height=height,
-                transparent=args.transparent,
-                israeli_color=args.israeli_color,
-                palestinian_color=args.palestinian_color,
-                needle_color=args.needle_color,
-                reconciliation_end=args.reconciliation_end,
-                right_zone_start=args.right_zone_start,
-                endpoint_text_size=args.endpoint_text_size,
-                zone_text_size=args.zone_text_size,
-                meter_spacing=args.meter_spacing,
-            )
-            return rasterize(svg)
+            return rasterize(draw_svg(time))
 
-        if args.stills:
-            args.stills.mkdir(parents=True, exist_ok=True)
-            for i, chapter in enumerate(config["chapters"]):
-                (args.stills / f"{i:02d}-{chapter['time']:05.2f}.png").write_bytes(
+        if stills:
+            stills.mkdir(parents=True, exist_ok=True)
+            for i, chapter in enumerate(chapters):
+                (stills / f"{i:02d}-{chapter['time']:05.2f}.png").write_bytes(
                     draw(chapter["time"] + 0.5)
                 )
         temp_output = Path(tmp) / ("render" + suffix)
@@ -184,7 +155,7 @@ def main():
             "pipe:0",
             "-an",
         ]
-        if args.transparent:
+        if transparent:
             command += [
                 "-c:v",
                 "prores_ks",
@@ -212,7 +183,7 @@ def main():
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=errors)
             try:
                 for index in range(frames):
-                    process.stdin.write(draw(args.start + index / fps))
+                    process.stdin.write(draw(start + index / fps))
                     if index % max(1, round(fps)) == 0:
                         print(f"Rendering {index + 1}/{frames} frames", flush=True)
                 process.stdin.close()
@@ -231,31 +202,80 @@ def main():
                 if process.poll() is None:
                     process.kill()
                     process.wait()
-        temp_output.replace(args.output)
-        (args.output.with_suffix(args.output.suffix + ".json")).write_text(
-            json.dumps(
-                {
-                    "timeline": config,
-                    "israeli_color": args.israeli_color,
-                    "palestinian_color": args.palestinian_color,
-                    "needle_color": args.needle_color,
-                    "width": width,
-                    "height": height,
-                    "fps": fps,
-                    "start": args.start,
-                    "end": end,
-                    "frames": frames,
-                    "transparent": args.transparent,
-                    "reconciliation_end": args.reconciliation_end,
-                    "right_zone_start": args.right_zone_start,
-                    "endpoint_text_size": args.endpoint_text_size,
-                    "zone_text_size": args.zone_text_size,
-                    "meter_spacing": args.meter_spacing,
-                },
-                indent=2,
-            )
+        temp_output.replace(output)
+    return frames
+
+
+def main():
+    args = parse_options()
+    config = load_scene(args.scene, args.timeline)
+    preset_width, preset_height = (
+        FORMATS[args.format] if args.format else (config["width"], config["height"])
+    )
+    width = args.width if args.width is not None else preset_width
+    height = args.height if args.height is not None else preset_height
+    fps = args.fps if args.fps is not None else config["fps"]
+    end = args.end if args.end is not None else config["duration"]
+    if width <= 0 or height <= 0 or width % 2 or height % 2:
+        raise ValueError("Width and height must be positive even integers")
+    if (
+        not math.isfinite(fps)
+        or fps <= 0
+        or not 0 <= args.start < end <= config["duration"]
+    ):
+        raise ValueError("Use a positive fps and 0 <= start < end <= timeline duration")
+
+    def draw_svg(time):
+        return render_scene(
+            state_at(config, time),
+            width=width,
+            height=height,
+            transparent=args.transparent,
+            israeli_color=args.israeli_color,
+            palestinian_color=args.palestinian_color,
+            needle_color=args.needle_color,
+            reconciliation_end=args.reconciliation_end,
+            right_zone_start=args.right_zone_start,
+            endpoint_text_size=args.endpoint_text_size,
+            zone_text_size=args.zone_text_size,
+            meter_spacing=args.meter_spacing,
         )
-        print(f"Saved {args.output.resolve()} ({frames} frames)")
+
+    frames = encode_video(
+        draw_svg,
+        output=args.output,
+        fps=fps,
+        start=args.start,
+        end=end,
+        transparent=args.transparent,
+        overwrite=args.overwrite,
+        stills=args.stills,
+        chapters=config["chapters"],
+    )
+    (args.output.with_suffix(args.output.suffix + ".json")).write_text(
+        json.dumps(
+            {
+                "timeline": config,
+                "israeli_color": args.israeli_color,
+                "palestinian_color": args.palestinian_color,
+                "needle_color": args.needle_color,
+                "width": width,
+                "height": height,
+                "fps": fps,
+                "start": args.start,
+                "end": end,
+                "frames": frames,
+                "transparent": args.transparent,
+                "reconciliation_end": args.reconciliation_end,
+                "right_zone_start": args.right_zone_start,
+                "endpoint_text_size": args.endpoint_text_size,
+                "zone_text_size": args.zone_text_size,
+                "meter_spacing": args.meter_spacing,
+            },
+            indent=2,
+        )
+    )
+    print(f"Saved {args.output.resolve()} ({frames} frames)")
 
 
 if __name__ == "__main__":

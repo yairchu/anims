@@ -6,18 +6,18 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
-    import json
     import marimo as mo
     import moops
     from pathlib import Path
     from animation_timeline import load_timeline, state_at
+    from export_video import encode_video
     from phone_scene import render_phone
     from phone_inputs import PhonePresets
 
     return (
         Path,
         PhonePresets,
-        json,
+        encode_video,
         load_timeline,
         mo,
         moops,
@@ -44,7 +44,7 @@ def _(PhonePresets, get_preset, set_preset, timeline, timeline_path):
         get_preset,
         set_preset,
         filename=timeline_path.with_name("phone_notification_presets.json"),
-        defaults=timeline["labels"],
+        defaults=timeline["labels"] | {"notification_scale": timeline.get("notification_scale", 1)},
     )
     return (presets,)
 
@@ -53,20 +53,6 @@ def _(PhonePresets, get_preset, set_preset, timeline, timeline_path):
 def _(moops, presets):
     args = moops.Group(presets=presets)
     return (args,)
-
-
-@app.cell
-def _(json, load_timeline):
-    def save_overlay(path, labels, notification_scale):
-        current = load_timeline(path)
-        current["labels"] = current.get("labels", {}) | labels
-        current["notification_scale"] = notification_scale
-        path.write_text(
-            json.dumps(current, ensure_ascii=False, indent=2) + "\n"
-        )
-        return "Saved. Rerun the export command to update your video."
-
-    return (save_overlay,)
 
 
 @app.cell
@@ -85,7 +71,7 @@ def _(load_timeline, timeline_file, timeline_path):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ### Phone notification overlay\nEdit the text below, check the preview, then save it for export.
+    ### Phone notification overlay\nEdit the text below, check the preview, then export.
     """)
     return
 
@@ -122,14 +108,22 @@ def _(args, mo, timeline):
         label="Notification message",
         help_text="Notification message",
     )
-    # 1.8 is about the widest banner that fits the 720-unit canvas.
-    notification_scale = mo.ui.slider(
+    # The banner keeps the screen's width; past 1.8 a typical title no longer fits on its line.
+    notification_scale = args.slider(
         start=1,
         stop=1.8,
         step=0.05,
         value=timeline.get("notification_scale", 1),
+        option="--notification-size",
         label="Notification size",
+        help_text="Notification height and text size, 1 = phone-accurate",
         show_value=True,
+    )
+    output = args.text(
+        value="output/phone-overlay.mov",
+        option="--output",
+        label="Output MOV",
+        help_text="Transparent ProRes MOV to export",
     )
     mo.hstack(
         [
@@ -149,6 +143,7 @@ def _(args, mo, timeline):
         notification_body,
         notification_scale,
         notification_title,
+        output,
     )
 
 
@@ -160,24 +155,28 @@ def _(
     mo,
     notification_app,
     notification_body,
+    notification_scale,
     notification_title,
+    output,
 ):
-    text_interface = args.interface(
+    interface = args.interface(
         account,
         caption,
         notification_app,
         notification_title,
         notification_body,
+        notification_scale,
+        output,
     )
     mo.vstack(
         [
             mo.md(
-                "Save a named **preset** to reuse these five text fields. Selecting one updates the preview. Use **Save text and size for export** below to apply it to the video."
+                "Save a named **preset** to reuse these text fields and the notification size. Selecting one updates the preview. Export uses the values shown here."
             ),
-            text_interface,
+            interface,
         ]
     )
-    return
+    return (interface,)
 
 
 @app.cell
@@ -196,32 +195,6 @@ def _(
         "body": notification_body.value,
     }
     return (live_labels,)
-
-
-@app.cell
-def _(live_labels, mo, notification_scale, save_overlay, timeline_path):
-    save_button = mo.ui.button(
-        label="Save text and size for export",
-        on_click=lambda _: save_overlay(
-            timeline_path, live_labels, notification_scale.value
-        ),
-    )
-    save_button
-    return
-
-
-@app.cell
-def _(live_labels, mo, notification_scale, timeline):
-    saved = live_labels == timeline[
-        "labels"
-    ] and notification_scale.value == timeline.get("notification_scale", 1)
-    save_status = (
-        "Saved text and size match the preview."
-        if saved
-        else "Unsaved changes — click Save text and size for export before rendering a video."
-    )
-    mo.md(save_status)
-    return
 
 
 @app.cell
@@ -276,19 +249,62 @@ def _(mo, scene_svg):
                 mimetype="image/svg+xml",
                 label="Download transparent frame",
             ),
-            mo.md("""**Export for Final Cut:**
-    ```sh
-    uv run python export_video.py --scene phone --transparent --output output/phone-overlay.mov --overwrite
-    ```
-    **Playback:** `uv run python animation_preview.py --scene phone`
+            mo.md("""**Export for Final Cut:** click **Export MOV** below, or run the
+    command under **Notebook CLI info** above, which carries the current values.
 
-    Save your text and size above before exporting. This command replaces the previous MOV.
     10 seconds: arrival at 2s, readable hold, upward dismissal at 6.3s.
     Place your video underneath the MOV and crop it to the screen opening.
     See `phone_overlay.md` for exact geometry and a masking option.
     """),
         ]
     )
+    return
+
+
+@app.cell
+def _(interface):
+    export_button = interface.run_button(label="Export MOV")
+    export_button
+    return (export_button,)
+
+
+@app.cell
+def _(
+    Path,
+    encode_video,
+    export_button,
+    live_labels,
+    mo,
+    notification_scale,
+    output,
+    render_phone,
+    state_at,
+    timeline,
+):
+    mo.stop(not export_button.value)
+    with mo.status.spinner("Exporting MOV..."):
+        overlay = {"labels": live_labels, "notification_scale": notification_scale.value}
+        exported = Path(output.value)
+        frames = encode_video(
+            lambda time: render_phone(
+                state_at(timeline, time) | overlay,
+                width=timeline["width"],
+                height=timeline["height"],
+                transparent=True,
+            ),
+            output=exported,
+            fps=timeline["fps"],
+            start=0,
+            end=timeline["duration"],
+            transparent=True,
+            overwrite=True,
+        )
+        print(f"Saved {exported.resolve()} ({frames} frames)")
+    return
+
+
+@app.cell
+def _():
     return
 
 

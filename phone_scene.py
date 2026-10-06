@@ -39,7 +39,7 @@ def render_phone(state, *, width=1080, height=1920, transparent=True):
     entered = state.get("notification_in", 0)
     dismiss = state.get("dismiss", 0)
     touch = state.get("touch", 0)
-    # Scaled about the banner's top center so it grows down over the video.
+    # Width stays the screen's; height and type grow so the text reads at video size.
     scale = state.get("notification_scale", 1)
     travel = 116 * scale + 144
     banner_y = 100 - travel * (1 - entered) - (travel + 20) * dismiss
@@ -100,20 +100,19 @@ def render_phone(state, *, width=1080, height=1920, transparent=True):
         parts.append(icon(kind, x, 861, 25))
     parts.append('<circle cx="526" cy="875" r="13" fill="#94887c"/><circle cx="526" cy="871" r="4" fill="#ddd4c8"/><path d="M518 882q8-12 16 0" fill="#ddd4c8"/>')
     parts.append('<rect x="301" y="915" width="118" height="4" rx="2" fill="white"/>')
-    # Drawn above the bezel, unclipped, so a scaled-up banner can overhang the phone.
-    parts.append('</g>')
     if entered > 0 and dismiss < 1:
-        parts.append(f'<g id="notification" transform="translate(360 {banner_y:.3f}) scale({scale:.3f}) translate(-360 0)">')
-        parts.append('<rect x="162" y="5" width="396" height="116" rx="25" fill="#000" opacity=".28" filter="url(#shadow)"/>')
-        parts.append('<rect x="162" width="396" height="116" rx="25" fill="url(#glass)" stroke="white" stroke-opacity=".55"/>')
-        parts.append('<rect x="510" y="17" width="32" height="32" rx="8" fill="#3977dc"/>')
-        parts.append(icon("shield", 517, 24, 18))
-        parts.append(text(460, 35, labels.get("app", "בדיקת צוותים"), 13, "#54545b", direction="rtl", text_anchor="middle"))
-        parts.append(text(180, 35, "now", 12, "#777780"))
-        parts.append(text(360, 69, labels.get("title", "רשימת צוות לבדיקה"), 24, "#19191d", direction="rtl", text_anchor="middle", font_weight="700"))
-        parts.append(text(360, 94, labels.get("body", "טיסה נכנסת • ממתינה לבדיקה"), 18, "#34343c", direction="rtl", text_anchor="middle"))
+        k = scale
+        parts.append(f'<g id="notification" transform="translate(0 {banner_y:.3f})">')
+        parts.append(f'<rect x="162" y="{5*k:.3f}" width="396" height="{116*k:.3f}" rx="25" fill="#000" opacity=".28" filter="url(#shadow)"/>')
+        parts.append(f'<rect x="162" width="396" height="{116*k:.3f}" rx="25" fill="url(#glass)" stroke="white" stroke-opacity=".55"/>')
+        parts.append(f'<rect x="{542-32*k:.3f}" y="{17*k:.3f}" width="{32*k:.3f}" height="{32*k:.3f}" rx="{8*k:.3f}" fill="#3977dc"/>')
+        parts.append(icon("shield", 542-25*k, 24*k, 18*k))
+        parts.append(text(542-82*k, 35*k, labels.get("app", "בדיקת צוותים"), 13*k, "#54545b", direction="rtl", text_anchor="middle"))
+        parts.append(text(180, 35*k, "now", 12*k, "#777780"))
+        parts.append(text(360, 69*k, labels.get("title", "רשימת צוות לבדיקה"), 24*k, "#19191d", direction="rtl", text_anchor="middle", font_weight="700"))
+        parts.append(text(360, 94*k, labels.get("body", "טיסה נכנסת • ממתינה לבדיקה"), 18*k, "#34343c", direction="rtl", text_anchor="middle"))
         parts.append('</g>')
     if touch > 0:
         parts.append(f'<circle id="touch" cx="371" cy="{100+105*scale-(travel+20)*dismiss:.3f}" r="{17*scale:.3f}" fill="white" fill-opacity=".22" stroke="white" stroke-width="2" opacity="{touch:.3f}"/>')
-    parts.append('</g></svg>')
+    parts.append('</g></g></svg>')
     return "".join(parts)

@@ -22,25 +22,25 @@ fields for **Account name**, **Post text**, **Notification app name**,
 after you submit the field (Enter or leaving the field). Scrub to 3 seconds to see
 the notification. Keep text concise enough to fit the single-line fields.
 
-The **Notification size** slider scales the banner from its top center (1 =
-phone-accurate, up to 1.8, the full canvas width). For an illustrated look, the
-banner is drawn over the phone frame and can overhang it. The size is saved with
-the text as `notification_scale` in `timeline_phone.json`, and presets don't
-store it.
+The **Notification size** slider makes the banner taller and its text and icon
+larger (1 = phone-accurate, up to 1.8). The banner keeps the screen's width, so
+at large sizes keep the title short enough to fit on one line.
 
-Click **Save text and size for export** to persist the fields to `timeline_phone.json`,
-then rerun the export command with `--overwrite` to update the MOV. Saving text
-does not regenerate existing videos. The account initial and audio attribution
-follow the account name automatically. You can also edit the five entries under
-`labels` in the JSON file directly; the notebook watches that file for changes.
+Click **Export MOV** at the bottom of the notebook to render the current text and
+size to the **Output MOV** path, replacing any existing file there.
+The notebook is also the exporter's command line: **Notebook CLI info** shows the
+`uv run python phone_notification.py ...` command for the current values, and
+running it renders the same MOV. The account initial and audio attribution follow
+the account name automatically. The defaults come from `labels` and
+`notification_scale` in `timeline_phone.json`; the notebook watches that file for
+changes.
 
-The text controls now use **moops presets**. Enter a preset name and click
-**Save** in the controls panel to store the five fields together. Select a saved
-preset to restore its text in the preview; the panel also supports renaming.
+The text and size controls use **moops presets**. Enter a preset name and click
+**Save** in the controls panel to store the five text fields and the size together.
+Select a saved preset to restore them in the preview; the panel also supports renaming.
 Presets are stored in `phone_notification_presets.json` next to the notebook.
-Saving or selecting a preset does not change animation timing or the export
-timeline. Click **Save text and size for export** when you want the selected text used in
-the next video render. The time scrubber is not part of a preset.
+Saving or selecting a preset does not change animation timing or the timeline
+file. The output path and the time scrubber are not part of a preset.
 
 | Seconds | Action |
 | --- | --- |
@@ -67,9 +67,9 @@ The PNG still and SVG are also transparent. Checkerboard in the notebook is only
 
 ```sh
 uv run marimo edit phone_notification.py
+uv run python phone_notification.py --notification-size 1.6 --output output/phone-overlay.mov
 uv run python animation_preview.py --scene phone
-uv run python export_video.py --scene phone --transparent --output output/phone-overlay.mov
 uv run python export_video.py --scene phone --output output/phone-preview.mp4
 ```
 
-Add `--overwrite` when replacing an existing export. Edit `labels` and keyframes in `timeline_phone.json` before rerendering. Setting the touch track to `[[0, 0]]` removes the illustrative touch circle.
+`export_video.py` needs `--overwrite` to replace an existing export, and uses only the timeline file's text and size. Edit keyframes in `timeline_phone.json` before rerendering. Setting the touch track to `[[0, 0]]` removes the illustrative touch circle.
