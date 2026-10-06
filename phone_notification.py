@@ -41,7 +41,8 @@ def _(mo):
 @app.cell
 def _(PhonePresets, get_preset, set_preset, timeline, timeline_path):
     presets = PhonePresets(
-        get_preset, set_preset,
+        get_preset,
+        set_preset,
         filename=timeline_path.with_name("phone_notification_presets.json"),
         defaults=timeline["labels"],
     )
@@ -60,7 +61,9 @@ def _(json, load_timeline):
         current = load_timeline(path)
         current["labels"] = current.get("labels", {}) | labels
         current["notification_scale"] = notification_scale
-        path.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n")
+        path.write_text(
+            json.dumps(current, ensure_ascii=False, indent=2) + "\n"
+        )
         return "Saved. Rerun the export command to update your video."
 
     return (save_overlay,)
@@ -80,26 +83,71 @@ def _(load_timeline, timeline_file, timeline_path):
 
 
 @app.cell
-def _(mo, timeline):
-    time = mo.ui.slider(start=0, stop=timeline["duration"], step=1/30, value=3, label="Time (seconds)", show_value=True)
-    # 1.8 is about the widest banner that fits the 720-unit canvas.
-    notification_scale = mo.ui.slider(start=1, stop=1.8, step=.05, value=timeline.get("notification_scale", 1), label="Notification size", show_value=True)
-    mo.vstack([mo.md("### Phone notification overlay\nEdit the text below, check the preview, then save it for export."), time, notification_scale])
-    return notification_scale, time
+def _(mo):
+    mo.md(r"""
+    ### Phone notification overlay\nEdit the text below, check the preview, then save it for export.
+    """)
+    return
 
 
 @app.cell
-def _(args, timeline):
-    account = args.text(value=timeline["labels"]["account"], option="--account", label="Account name", help_text="Account name", full_width=True)
-    caption = args.text(value=timeline["labels"]["caption"], option="--caption", label="Post text", help_text="Post text", full_width=True)
-    notification_app = args.text(value=timeline["labels"]["app"], option="--notification-app", label="Notification app name", help_text="Notification app name", full_width=True)
-    notification_title = args.text(value=timeline["labels"]["title"], option="--notification-title", label="Notification title", help_text="Notification title", full_width=True)
-    notification_body = args.text(value=timeline["labels"]["body"], option="--notification-body", label="Notification message", help_text="Notification message", full_width=True)
+def _(args, mo, timeline):
+    account = args.text(
+        value=timeline["labels"]["account"],
+        option="--account",
+        label="Account name",
+        help_text="Account name",
+    )
+    caption = args.text(
+        value=timeline["labels"]["caption"],
+        option="--caption",
+        label="Post text",
+        help_text="Post text",
+    )
+    notification_app = args.text(
+        value=timeline["labels"]["app"],
+        option="--notification-app",
+        label="Notification app name",
+        help_text="Notification app name",
+    )
+    notification_title = args.text(
+        value=timeline["labels"]["title"],
+        option="--notification-title",
+        label="Notification title",
+        help_text="Notification title",
+    )
+    notification_body = args.text(
+        value=timeline["labels"]["body"],
+        option="--notification-body",
+        label="Notification message",
+        help_text="Notification message",
+    )
+    # 1.8 is about the widest banner that fits the 720-unit canvas.
+    notification_scale = mo.ui.slider(
+        start=1,
+        stop=1.8,
+        step=0.05,
+        value=timeline.get("notification_scale", 1),
+        label="Notification size",
+        show_value=True,
+    )
+    mo.hstack(
+        [
+            account,
+            caption,
+            notification_app,
+            notification_title,
+            notification_body,
+            notification_scale,
+        ],
+        wrap=True,
+    )
     return (
         account,
         caption,
         notification_app,
         notification_body,
+        notification_scale,
         notification_title,
     )
 
@@ -114,16 +162,21 @@ def _(
     notification_body,
     notification_title,
 ):
-    text_interface = args.interface(account, caption, notification_app, notification_title, notification_body)
-    mo.vstack([
+    text_interface = args.interface(
         account,
         caption,
         notification_app,
         notification_title,
         notification_body,
-        mo.md("Save a named **preset** to reuse these five text fields. Selecting one updates the preview. Use **Save text and size for export** below to apply it to the video."),
-        text_interface,
-    ])
+    )
+    mo.vstack(
+        [
+            mo.md(
+                "Save a named **preset** to reuse these five text fields. Selecting one updates the preview. Use **Save text and size for export** below to apply it to the video."
+            ),
+            text_interface,
+        ]
+    )
     return
 
 
@@ -149,7 +202,9 @@ def _(
 def _(live_labels, mo, notification_scale, save_overlay, timeline_path):
     save_button = mo.ui.button(
         label="Save text and size for export",
-        on_click=lambda _: save_overlay(timeline_path, live_labels, notification_scale.value),
+        on_click=lambda _: save_overlay(
+            timeline_path, live_labels, notification_scale.value
+        ),
     )
     save_button
     return
@@ -157,10 +212,30 @@ def _(live_labels, mo, notification_scale, save_overlay, timeline_path):
 
 @app.cell
 def _(live_labels, mo, notification_scale, timeline):
-    saved = live_labels == timeline["labels"] and notification_scale.value == timeline.get("notification_scale", 1)
-    save_status = "Saved text and size match the preview." if saved else "Unsaved changes — click Save text and size for export before rendering a video."
+    saved = live_labels == timeline[
+        "labels"
+    ] and notification_scale.value == timeline.get("notification_scale", 1)
+    save_status = (
+        "Saved text and size match the preview."
+        if saved
+        else "Unsaved changes — click Save text and size for export before rendering a video."
+    )
     mo.md(save_status)
     return
+
+
+@app.cell
+def _(mo, timeline):
+    time = mo.ui.slider(
+        start=0,
+        stop=timeline["duration"],
+        step=1 / 30,
+        value=3,
+        label="Time (seconds)",
+        show_value=True,
+    )
+    time
+    return (time,)
 
 
 @app.cell
@@ -173,18 +248,35 @@ def _(
     time,
     timeline,
 ):
-    preview_state = state_at(timeline, time.value) | {"labels": live_labels, "notification_scale": notification_scale.value}
-    scene_svg = render_phone(preview_state, width=1080, height=1920, transparent=True)
-    preview_svg = scene_svg.replace('width="1080" height="1920"', 'width="432" height="768"', 1)
-    mo.Html('<div style="width:432px;max-width:100%;background:repeating-conic-gradient(#d9dce0 0% 25%,#f4f5f7 0% 50%) 0 0/24px 24px">' + preview_svg + '</div>')
+    preview_state = state_at(timeline, time.value) | {
+        "labels": live_labels,
+        "notification_scale": notification_scale.value,
+    }
+    scene_svg = render_phone(
+        preview_state, width=1080, height=1920, transparent=True
+    )
+    preview_svg = scene_svg.replace(
+        'width="1080" height="1920"', 'width="432" height="768"', 1
+    )
+    mo.Html(
+        '<div style="width:432px;max-width:100%;background:repeating-conic-gradient(#d9dce0 0% 25%,#f4f5f7 0% 50%) 0 0/24px 24px">'
+        + preview_svg
+        + "</div>"
+    )
     return (scene_svg,)
 
 
 @app.cell
 def _(mo, scene_svg):
-    mo.vstack([
-        mo.download(scene_svg, filename="phone-overlay.svg", mimetype="image/svg+xml", label="Download transparent frame"),
-        mo.md("""**Export for Final Cut:**
+    mo.vstack(
+        [
+            mo.download(
+                scene_svg,
+                filename="phone-overlay.svg",
+                mimetype="image/svg+xml",
+                label="Download transparent frame",
+            ),
+            mo.md("""**Export for Final Cut:**
     ```sh
     uv run python export_video.py --scene phone --transparent --output output/phone-overlay.mov --overwrite
     ```
@@ -195,7 +287,8 @@ def _(mo, scene_svg):
     Place your video underneath the MOV and crop it to the screen opening.
     See `phone_overlay.md` for exact geometry and a masking option.
     """),
-    ])
+        ]
+    )
     return
 
 
