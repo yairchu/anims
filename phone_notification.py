@@ -8,12 +8,50 @@ app = marimo.App(width="medium")
 def _():
     import json
     import marimo as mo
+    import moops
     from pathlib import Path
     from animation_timeline import load_timeline, state_at
     from phone_scene import render_phone
+    from phone_inputs import PhonePresets
 
+    return (
+        Path,
+        PhonePresets,
+        json,
+        load_timeline,
+        mo,
+        moops,
+        render_phone,
+        state_at,
+    )
+
+
+@app.cell
+def _(Path):
     timeline_path = Path(__file__).with_name("timeline_phone.json")
-    return json, load_timeline, mo, render_phone, state_at, timeline_path
+    return (timeline_path,)
+
+
+@app.cell
+def _(mo):
+    get_preset, set_preset = mo.state(None)
+    return get_preset, set_preset
+
+
+@app.cell
+def _(PhonePresets, get_preset, set_preset, timeline, timeline_path):
+    presets = PhonePresets(
+        get_preset, set_preset,
+        filename=timeline_path.with_name("phone_notification_presets.json"),
+        defaults=timeline["labels"],
+    )
+    return (presets,)
+
+
+@app.cell
+def _(moops, presets):
+    args = moops.Group(presets=presets)
+    return (args,)
 
 
 @app.cell
@@ -48,13 +86,12 @@ def _(mo, timeline):
 
 
 @app.cell
-def _(mo, timeline):
-    account = mo.ui.text(value=timeline["labels"]["account"], label="Account name", full_width=True)
-    caption = mo.ui.text(value=timeline["labels"]["caption"], label="Post text", full_width=True)
-    notification_app = mo.ui.text(value=timeline["labels"]["app"], label="Notification app name", full_width=True)
-    notification_title = mo.ui.text(value=timeline["labels"]["title"], label="Notification title", full_width=True)
-    notification_body = mo.ui.text(value=timeline["labels"]["body"], label="Notification message", full_width=True)
-    mo.vstack([account, caption, notification_app, notification_title, notification_body])
+def _(args, timeline):
+    account = args.text(value=timeline["labels"]["account"], option="--account", label="Account name", help_text="Account name", full_width=True)
+    caption = args.text(value=timeline["labels"]["caption"], option="--caption", label="Post text", help_text="Post text", full_width=True)
+    notification_app = args.text(value=timeline["labels"]["app"], option="--notification-app", label="Notification app name", help_text="Notification app name", full_width=True)
+    notification_title = args.text(value=timeline["labels"]["title"], option="--notification-title", label="Notification title", help_text="Notification title", full_width=True)
+    notification_body = args.text(value=timeline["labels"]["body"], option="--notification-body", label="Notification message", help_text="Notification message", full_width=True)
     return (
         account,
         caption,
@@ -62,6 +99,29 @@ def _(mo, timeline):
         notification_body,
         notification_title,
     )
+
+
+@app.cell
+def _(
+    account,
+    args,
+    caption,
+    mo,
+    notification_app,
+    notification_body,
+    notification_title,
+):
+    text_interface = args.interface(account, caption, notification_app, notification_title, notification_body)
+    mo.vstack([
+        account,
+        caption,
+        notification_app,
+        notification_title,
+        notification_body,
+        mo.md("Save a named **preset** to reuse these five text fields. Selecting one updates the preview. Use **Save text for export** below to apply it to the video."),
+        text_interface,
+    ])
+    return
 
 
 @app.cell

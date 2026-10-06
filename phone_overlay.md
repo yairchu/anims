@@ -28,6 +28,14 @@ does not regenerate existing videos. The account initial and audio attribution
 follow the account name automatically. You can also edit the five entries under
 `labels` in the JSON file directly; the notebook watches that file for changes.
 
+The text controls now use **moops presets**. Enter a preset name and click
+**Save** in the controls panel to store the five fields together. Select a saved
+preset to restore its text in the preview; the panel also supports renaming.
+Presets are stored in `phone_notification_presets.json` next to the notebook.
+Saving or selecting a preset does not change animation timing or the export
+timeline. Click **Save text for export** when you want the selected text used in
+the next video render. The time scrubber is not part of a preset.
+
 | Seconds | Action |
 | --- | --- |
 | 0–2 | Reel interface; your video plays underneath. |
