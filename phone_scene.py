@@ -1,5 +1,6 @@
 """Vector phone overlay. No video is baked into the transparent screen aperture."""
 
+import math
 from html import escape
 
 # Canonical 720 × 1280 composition; multiply by 1.5 for the default export.
@@ -39,6 +40,8 @@ def render_phone(state, *, width=1080, height=1920, transparent=True):
     entered = state.get("notification_in", 0)
     dismiss = state.get("dismiss", 0)
     touch = state.get("touch", 0)
+    like = state.get("like", 0)
+    like_touch = state.get("like_touch", 0)
     # Width stays the screen's; height and type grow so the text reads at video size.
     scale = state.get("notification_scale", 1)
     travel = 116 * scale + 144
@@ -82,14 +85,19 @@ def render_phone(state, *, width=1080, height=1920, transparent=True):
     parts.append(icon("camera", 520, 105, 27))
     parts.append('<g filter="url(#ink)">')
     for kind, y, count in [("heart", 522, "24.8K"), ("comment", 596, "318"), ("send", 670, "1,204")]:
-        parts.append(icon(kind, 522, y, 30))
+        if kind == "heart" and like > 0:
+            # Liked: filled red, popping up and settling as the track completes.
+            pop = 1 + .35 * math.sin(math.pi * like)
+            parts.append(f'<g transform="translate(537 537) scale({pop:.3f}) translate(-537 -537)">')
+            parts.append(icon(kind, 522, y, 30, "#ff3040", filled=True))
+            parts.append('</g>')
+        else:
+            parts.append(icon(kind, 522, y, 30))
         parts.append(text(537, y+48, count, 12, text_anchor="middle", font_weight="600"))
     parts.append('<circle cx="528" cy="750" r="2" fill="white"/><circle cx="536" cy="750" r="2" fill="white"/><circle cx="544" cy="750" r="2" fill="white"/>')
     parts.append('<circle cx="184" cy="768" r="15" fill="#dcc6a5" stroke="white" stroke-width="1.5"/>')
     parts.append(text(184, 774, labels.get("account", "good.dog.club").lstrip("@")[:1], 20, "#4b382c", text_anchor="middle", font_weight="700"))
     parts.append(text(207, 775, labels.get("account", "good.dog.club"), 15, font_weight="700"))
-    parts.append('<rect x="325" y="755" width="58" height="24" rx="6" fill="none" stroke="white" stroke-opacity=".8"/>')
-    parts.append(text(354, 772, "Follow", 12, text_anchor="middle"))
     parts.append(text(170, 803, labels.get("caption", "Just another day at the skatepark."), 14))
     parts.append(icon("music", 170, 816, 13))
     parts.append(text(190, 827, labels.get("account", "good.dog.club") + " · Original audio", 11))
@@ -112,6 +120,8 @@ def render_phone(state, *, width=1080, height=1920, transparent=True):
         parts.append(text(360, 69*k, labels.get("title", "רשימת צוות לבדיקה"), 24*k, "#19191d", direction="rtl", text_anchor="middle", font_weight="700"))
         parts.append(text(360, 94*k, labels.get("body", "טיסה נכנסת • ממתינה לבדיקה"), 18*k, "#34343c", direction="rtl", text_anchor="middle"))
         parts.append('</g>')
+    if like_touch > 0:
+        parts.append(f'<circle id="like-touch" cx="537" cy="537" r="17" fill="white" fill-opacity=".22" stroke="white" stroke-width="2" opacity="{like_touch:.3f}"/>')
     if touch > 0:
         parts.append(f'<circle id="touch" cx="371" cy="{100+105*scale-(travel+20)*dismiss:.3f}" r="{17*scale:.3f}" fill="white" fill-opacity=".22" stroke="white" stroke-width="2" opacity="{touch:.3f}"/>')
     parts.append('</g></g></svg>')

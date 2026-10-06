@@ -49,7 +49,9 @@ file. The output path and the time scrubber are not part of a preset.
 | 2.48–6.3 | Readable hold. |
 | 6.08–6.64 | Brief illustrative touch indicator. |
 | 6.3–6.68 | Banner swipes upward. |
-| 6.68–10 | Unobstructed reel resumes. |
+| 6.68–7.2 | Unobstructed reel resumes. |
+| 7.2–7.65 | Tap on the heart. |
+| 7.3–7.6 | Heart pops and turns red; stays liked to the end. |
 
 There is no automatic scrolling or dog footage in the overlay. The underlying video can keep playing throughout, including during the notification.
 
@@ -72,4 +74,4 @@ uv run python animation_preview.py --scene phone
 uv run python export_video.py --scene phone --output output/phone-preview.mp4
 ```
 
-`export_video.py` needs `--overwrite` to replace an existing export, and uses only the timeline file's text and size. Edit keyframes in `timeline_phone.json` before rerendering. Setting the touch track to `[[0, 0]]` removes the illustrative touch circle.
+`export_video.py` needs `--overwrite` to replace an existing export, and uses only the timeline file's text and size. Edit keyframes in `timeline_phone.json` before rerendering. Setting the touch track to `[[0, 0]]` removes the illustrative touch circle; do the same to `like_touch` and `like` to drop the heart tap.
