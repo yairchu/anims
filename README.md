@@ -15,6 +15,21 @@ See [phone_overlay.md](phone_overlay.md) for compositing geometry, the video
 matte, and timing edits. The default portrait export leaves the bottom 500
 pixels clear for captions. `timeline_phone.json` controls text and timing.
 
+## FlyDubai · crew list binned
+
+`uv run marimo edit flydubai_crew_list.py` opens a 14-second portrait animation:
+the airline sends its crew list, which has one masked-figure crew member, to
+רשות התעופה האזרחית. The list is zoomed in so the flagged row can be read. It is
+filed at the authority, then tumbles into a bin. The bin is editorial satire for
+unused information; see `flydubai_research.md` for what reporting does and does
+not establish about who received the list. Card text is editable in the notebook
+and under `labels` in `timeline_crew_list.json`, which also holds the timing.
+
+```sh
+uv run python flydubai_crew_list.py --transparent    # output/flydubai-crew-list.mov
+uv run python animation_preview.py --scene crew_list
+```
+
 ## Tunnels · 2014 → 2026
 
 The second video has its own notebook and artwork, sharing the timeline engine,

@@ -320,6 +320,10 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
         from phone_scene import render_phone
 
         return render_phone(state, width=width, height=height, transparent=transparent)
+    if state.get("scene") == "crew_list":
+        from crew_list_scene import render_crew_list
+
+        return render_crew_list(state, width=width, height=height, transparent=transparent)
     if state.get("scene") == "tunnels":
         from tunnels_scene import render_tunnels
 

@@ -5,9 +5,10 @@ from pathlib import Path
 
 DEFAULT_TIMELINE = Path(__file__).with_name("timeline.json")
 METER_SCENE_LABELS = {"Meter introduction": "intro", "Blocked partnership": "blocked", "Escalation": "escalation", "Full sequence": "full"}
-SCENE_LABELS = METER_SCENE_LABELS | {"Tunnels · 2014 → 2026": "tunnels", "Phone · notification dismissed": "phone"}
-SCENE_FILES = {"intro": "timeline_intro.json", "blocked": "timeline_blocked.json", "escalation": "timeline.json", "tunnels": "timeline_tunnels.json", "phone": "timeline_phone.json"}
+SCENE_LABELS = METER_SCENE_LABELS | {"Tunnels · 2014 → 2026": "tunnels", "Phone · notification dismissed": "phone", "FlyDubai · crew list binned": "crew_list"}
+SCENE_FILES = {"intro": "timeline_intro.json", "blocked": "timeline_blocked.json", "escalation": "timeline.json", "tunnels": "timeline_tunnels.json", "phone": "timeline_phone.json", "crew_list": "timeline_crew_list.json"}
 PHONE_TRACKS = {"notification_in", "dismiss", "touch", "like", "like_touch"}
+CREW_LIST_TRACKS = {"cards", "list_in", "zoom", "flag", "send", "bin_in", "discard"}
 TUNNEL_TRACKS = {"hierarchy", "knowledge", "withheld", "question", "request", "disclosure", "surprise", "cabinet_update", "modern", "alignment"}
 REVEAL_TRACKS = {"left_reveal", "right_reveal", "arc_reveal", "needle_reveal", "logos_reveal", "zones_reveal"}
 BLOCKED_TRACKS = {"potential_position", "potential_opacity", "netanyahu", "abbas", "smotrich", "partnership", "block"}
@@ -41,8 +42,8 @@ def load_timeline(path=DEFAULT_TIMELINE):
     scene = data.get("scene", "escalation")
     if scene not in SCENE_FILES:
         raise ValueError(f"Unknown scene: {scene}")
-    required = PHONE_TRACKS if scene == "phone" else TUNNEL_TRACKS if scene == "tunnels" else TRACKS | (BLOCKED_TRACKS if scene == "blocked" else REVEAL_TRACKS if scene == "intro" else set())
-    optional = set() if scene in {"tunnels", "phone"} else REVEAL_TRACKS
+    required = PHONE_TRACKS if scene == "phone" else CREW_LIST_TRACKS if scene == "crew_list" else TUNNEL_TRACKS if scene == "tunnels" else TRACKS | (BLOCKED_TRACKS if scene == "blocked" else REVEAL_TRACKS if scene == "intro" else set())
+    optional = set() if scene in {"tunnels", "phone", "crew_list"} else REVEAL_TRACKS
     if not required <= set(data["tracks"]) or set(data["tracks"]) - required - optional:
         raise ValueError(f"Timeline must define these tracks: {sorted(required)}")
     for name, keys in data["tracks"].items():
@@ -94,7 +95,7 @@ def state_at(timeline, time):
                 return state
     state = {name: sample(keys, time) for name, keys in timeline["tracks"].items()}
     state["scene"] = timeline.get("scene", "escalation")
-    if state["scene"] in {"tunnels", "phone"}:
+    if state["scene"] in {"tunnels", "phone", "crew_list"}:
         state["labels"] = timeline.get("labels", {})
     if state["scene"] == "phone":
         state["notification_scale"] = timeline.get("notification_scale", 1)
