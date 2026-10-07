@@ -19,7 +19,10 @@ class PhoneTests(unittest.TestCase):
         held = render(3)
         self.assertIsNotNone(ET.fromstring(held).find(".//*[@id='notification']"))
         self.assertIsNotNone(ET.fromstring(render(6.35)).find(".//*[@id='touch']"))
-        self.assertEqual(render(0), render(9))
+        # The banner leaves no trace; only the later like changes the reel.
+        unliked = lambda t: render_scene(state_at(timeline, t) | {"like": 0, "like_touch": 0}, transparent=True)
+        self.assertEqual(render(0), unliked(9))
+        self.assertNotEqual(render(0), render(9))
         self.assertEqual(held, render(3))
         args = parse_options(["export_video.py", "--scene", "phone", "--transparent", "--output", "output/phone.mov"])
         self.assertEqual(args.scene, "phone")
@@ -36,7 +39,8 @@ class PhoneTests(unittest.TestCase):
             ).stdout
             alpha = np.frombuffer(rgba, dtype=np.uint8).reshape(1280, 720, 4)[:, :, 3]
             self.assertEqual(int(alpha[350:500, 250:450].max()), 0, "Video window must stay transparent")
-            self.assertEqual(int(alpha[960:, :].max()), 0, "Caption area must stay transparent")
+            self.assertEqual(int(alpha[960:, 440:].max()), 0, "Caption area beside the hand must stay transparent")
+            self.assertEqual(int(alpha[1200, 40]), 255, "The hand holds the phone from the bottom left")
             self.assertEqual(int(alpha[0:30, :].max()), 0, "Outside phone must stay transparent")
             self.assertEqual(int(alpha[880, 360]), 255, "Navigation bar must remain opaque")
             if time == 3:

@@ -1,10 +1,11 @@
-"""Presets round-trip all text without implicitly changing the export timeline."""
+"""Presets round-trip all text without changing the timeline file."""
 
 import json
 import shlex
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 import moops
 
@@ -24,7 +25,10 @@ class PhonePresetTests(unittest.TestCase):
             selected = [None]
             def store(value):
                 selected[0] = value
-            presets = PhonePresets(lambda: selected[0], store, filename=preset_path, defaults=timeline["labels"])
+            defaults = timeline["labels"] | {"notification_scale": timeline["notification_scale"]}
+            presets = PhonePresets(lambda: selected[0], store, filename=preset_path, defaults=defaults)
+            # Running the notebook as a script exports; keep these runs to the preview.
+            no_export = SimpleNamespace(value=False)
             labels = {
                 "account": "dog's.club", "caption": 'שלום & "hello" <3',
                 "app": "בדיקת צוותים", "title": "רשימה חדשה", "body": "",
@@ -36,12 +40,13 @@ class PhonePresetTests(unittest.TestCase):
             argv = ["phone_notification.py"] + [token for pair in options.items() for token in pair]
             _, edited = app.run(defs={
                 "args": moops.Group(argv, presets=presets), "timeline_path": timeline_path,
+                "export_button": no_export,
             })
             self.assertEqual(edited["live_labels"], labels)
-            serialized = edited["text_interface"].preset_args()
+            serialized = edited["interface"].preset_args()
             self.assertNotIn("--time", shlex.split(serialized))
             presets.save("Dog reel", serialized)
-            reloaded = PhonePresets(lambda: selected[0], store, filename=preset_path, defaults=timeline["labels"])
+            reloaded = PhonePresets(lambda: selected[0], store, filename=preset_path, defaults=defaults)
             reloaded.rename("Dog reel", "Hebrew reel")
             self.assertEqual(list(reloaded.list()), ["Hebrew reel"])
             # Change defaults to ensure even empty / formerly default values restore.
@@ -49,14 +54,10 @@ class PhonePresetTests(unittest.TestCase):
             _, restored = app.run(defs={
                 "args": moops.Group(["phone_notification.py"], presets=reloaded),
                 "timeline_path": timeline_path, "timeline": other_defaults,
+                "export_button": no_export,
             })
             self.assertEqual(restored["live_labels"], labels)
             self.assertEqual(timeline_path.read_bytes(), before)
-            restored["save_labels"](timeline_path, restored["live_labels"])
-            applied = json.loads(timeline_path.read_text())
-            self.assertEqual(applied["labels"], labels)
-            self.assertEqual(applied["tracks"], timeline["tracks"])
-            self.assertEqual(applied["duration"], timeline["duration"])
 
 
 if __name__ == "__main__":
