@@ -24,6 +24,8 @@ filed at the authority, then tumbles into a bin. The bin is editorial satire for
 unused information; see `flydubai_research.md` for what reporting does and does
 not establish about who received the list. Card text is editable in the notebook
 and under `labels` in `timeline_crew_list.json`, which also holds the timing.
+The **Airline/authority text size** slider (`--card-text-size`, or
+`card_text_scale` in the timeline) enlarges those two cards for small screens.
 
 ```sh
 uv run python flydubai_crew_list.py --transparent    # output/flydubai-crew-list.mov

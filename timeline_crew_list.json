@@ -4,6 +4,7 @@
   "fps": 30,
   "width": 1080,
   "height": 1920,
+  "card_text_scale": 1,
   "labels": {
     "airline": "flydubai",
     "airline_role": "חברת התעופה",

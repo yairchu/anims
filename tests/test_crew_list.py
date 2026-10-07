@@ -14,8 +14,8 @@ from export_video import parse_options
 SVG = "{http://www.w3.org/2000/svg}"
 
 
-def alpha_at(timeline, time):
-    svg = render_scene(state_at(timeline, time), width=720, height=1280, transparent=True)
+def alpha_at(timeline, time, **overrides):
+    svg = render_scene(state_at(timeline, time) | overrides, width=720, height=1280, transparent=True)
     png = resvg_py.svg_to_bytes(svg_string=svg, font_family="Arial")
     rgba = subprocess.run(
         ["ffmpeg", "-v", "error", "-i", "pipe:0", "-f", "rawvideo", "-pix_fmt", "rgba", "pipe:1"],
@@ -49,10 +49,17 @@ class CrewListTests(unittest.TestCase):
         self.assertLess(binned.index("bin-back"), binned.index("crew-list"))
         self.assertEqual(binned[-1], "bin", "The bin's front covers the binned list")
 
+    def test_list_clears_the_largest_cards_on_its_way_to_the_bin(self):
+        ids = [element.get("id") for element in self.render(11.5, card_text_scale=1.5).iter()
+               if element.get("id")]
+        self.assertGreater(ids.index("crew-list"), ids.index("agency"))
+
     def test_caption_area_stays_clear(self):
-        for time in (0, 5, 11.4, 14):
-            alpha = alpha_at(self.timeline, time)
-            self.assertEqual(int(alpha[950:].max()), 0, f"Caption area must stay transparent at {time}s")
+        for scale in (1, 1.5):
+            for time in (0, 5, 11.4, 14):
+                alpha = alpha_at(self.timeline, time, card_text_scale=scale)
+                self.assertEqual(int(alpha[950:].max()), 0,
+                                 f"Caption area must stay transparent at {time}s, card scale {scale}")
 
     def test_exporter_accepts_the_scene(self):
         args = parse_options(["export_video.py", "--scene", "crew_list", "--output", "output/crew.mp4"])

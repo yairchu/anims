@@ -3,6 +3,8 @@
 Editorial illustration: the bin is a metaphor for unused information.
 """
 
+from functools import cache
+
 from tunnels_scene import INK, MUTED, BLUE, clamp, cubic, partial_curve, path, text
 
 RED = "#c0392b"
@@ -18,8 +20,6 @@ LIST_SCALE, LIST_HALF_HEIGHT = .9, 90
 # Enlarged mid-screen so the roster can be read.
 ZOOM_CENTER, ZOOM_SCALE = (360, 470), 2.6
 SEND_ROUTE = (ISSUED, (170, 380), (170, 500), FILED)
-# Rises out of the authority's card first, then arcs around into the bin.
-DISCARD_ROUTE = (FILED, (370, 380), (660, 560), (BIN[0], BIN[1] + 2))
 FLAGGED_ROW = 2
 ROWS = (-34, -6, 22, 50, 78)
 PLANE = ("M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 "
@@ -35,12 +35,23 @@ def discard_scale(discard):
     return LIST_SCALE * (1 - .45*discard)
 
 
-# On its way to the bin, the list comes to the front once it clears the card.
-CLEARS_CARD = next(
-    t / 100 for t in range(101)
-    if cubic(DISCARD_ROUTE, t / 100)[1] + LIST_HALF_HEIGHT * discard_scale(t / 100)
-    < AGENCY[1] - CARD_HEIGHT / 2
-)
+def discard_route(card_scale):
+    """Rises out of the authority's card first, then arcs around into the bin.
+
+    Larger cards need a higher arc for the list to clear them.
+    """
+    lift = 240 * (card_scale - 1)
+    return (FILED, (370, 380 - lift), (660, 560 - lift), (BIN[0], BIN[1] + 2))
+
+
+@cache
+def clears_card(card_scale):
+    """On its way to the bin, the list comes to the front once it clears the card."""
+    return next(
+        t / 100 for t in range(101)
+        if cubic(discard_route(card_scale), t / 100)[1] + LIST_HALF_HEIGHT * discard_scale(t / 100)
+        < AGENCY[1] - CARD_HEIGHT * card_scale / 2
+    )
 
 
 def avatar(masked):
@@ -75,11 +86,11 @@ def crew_list(title, flag):
     return "".join(parts)
 
 
-def card(name, position, icon, title, subtitle, opacity, highlight=0):
+def card(name, position, icon, title, subtitle, opacity, highlight=0, scale=1):
     x, y = position
     w, h = CARD_WIDTH, CARD_HEIGHT
     frame = f'x="{-w/2:g}" y="{-h/2:g}" width="{w}" height="{h}" rx="28"'
-    return (f'<g id="{name}" transform="translate({x} {y})" opacity="{opacity:g}">'
+    return (f'<g id="{name}" transform="translate({x} {y}) scale({scale:g})" opacity="{opacity:g}">'
             f'<rect {frame} fill="white" stroke="#e4e6e9" stroke-width="2"/>'
             f'<rect {frame} fill="none" stroke="{BLUE}" stroke-width="4" opacity="{highlight:g}"/>'
             f'<g transform="translate({w/2 - 100:g} -31) scale(2.6)"><path d="{icon}" fill="{BLUE}"/></g>'
@@ -104,8 +115,10 @@ def render_crew_list(state, *, width=1080, height=1920, transparent=False):
     cards, list_in, zoom, flag = (clamp(state[name]) for name in ("cards", "list_in", "zoom", "flag"))
     send, bin_in, discard = (clamp(state[name]) for name in ("send", "bin_in", "discard"))
 
+    # Enlarges the cards as a whole, so longer names still fit; 1.5 spans nearly the full width.
+    card_scale = state.get("card_text_scale", 1)
     if discard > 0:
-        position = cubic(DISCARD_ROUTE, discard)
+        position = cubic(discard_route(card_scale), discard)
     elif send > 0:
         position = cubic(SEND_ROUTE, send)
     else:
@@ -114,7 +127,7 @@ def render_crew_list(state, *, width=1080, height=1920, transparent=False):
     scale = LIST_SCALE + (ZOOM_SCALE - LIST_SCALE) * zoom if zoom else discard_scale(discard)
     roster = (f'<g id="crew-list" transform="translate({x:g} {y:g}) rotate({200*discard:g}) scale({scale:g})" '
               f'opacity="{clamp(3*list_in):g}">{crew_list(labels.get("list", "רשימת אנשי צוות"), flag)}</g>')
-    in_front = zoom > 0 or (discard > 0 and discard >= CLEARS_CARD)
+    in_front = zoom > 0 or (discard > 0 and discard >= clears_card(card_scale))
 
     background = "" if transparent else '<rect width="720" height="1280" fill="white"/>'
     parts = [f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 720 1280"
@@ -130,10 +143,10 @@ def render_crew_list(state, *, width=1080, height=1920, transparent=False):
     # Fade the cards behind the zoomed list so the roster reads clearly.
     backdrop = cards * (1 - .8*zoom)
     parts.append(card("airline", AIRLINE, PLANE, labels.get("airline", "flydubai"),
-                      labels.get("airline_role", "חברת התעופה"), backdrop))
+                      labels.get("airline_role", "חברת התעופה"), backdrop, scale=card_scale))
     received = clamp((send - .9) / .1) * (1 - clamp(4*discard))
     parts.append(card("agency", AGENCY, BUILDING, labels.get("agency", "רשות התעופה האזרחית"),
-                      labels.get("agency_role", "משרד התחבורה"), backdrop, received))
+                      labels.get("agency_role", "משרד התחבורה"), backdrop, received, card_scale))
     if in_front:
         parts.append(roster)
     if bin_in > 0:

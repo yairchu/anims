@@ -99,6 +99,8 @@ def state_at(timeline, time):
         state["labels"] = timeline.get("labels", {})
     if state["scene"] == "phone":
         state["notification_scale"] = timeline.get("notification_scale", 1)
+    if state["scene"] == "crew_list":
+        state["card_text_scale"] = timeline.get("card_text_scale", 1)
     state["events"] = [dict(event, progress=(time - event["start"]) / event["duration"])
                        for event in timeline["events"]
                        if event["start"] <= time < event["start"] + event["duration"]]

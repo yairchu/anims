@@ -62,6 +62,17 @@ def _(args, mo, timeline):
     crew_list_title = label("list", "--list-title", "Crew list title")
     agency = label("agency", "--agency", "Receiving authority")
     agency_role = label("agency_role", "--agency-role", "Authority caption")
+    # The cards grow as a whole; at 1.5 they span nearly the full width.
+    card_text_scale = args.slider(
+        start=1,
+        stop=1.5,
+        step=0.05,
+        value=timeline.get("card_text_scale", 1),
+        option="--card-text-size",
+        label="Airline/authority text size",
+        help_text="Scale of the airline and authority cards and their text",
+        show_value=True,
+    )
     transparent = args.checkbox(
         flag="--transparent",
         label="Transparent background",
@@ -73,7 +84,16 @@ def _(args, mo, timeline):
         help_text="Output path (default: output/flydubai-crew-list.mp4, or .mov when transparent)",
     )
     mo.hstack(
-        [airline, airline_role, crew_list_title, agency, agency_role, transparent, output],
+        [
+            airline,
+            airline_role,
+            crew_list_title,
+            agency,
+            agency_role,
+            card_text_scale,
+            transparent,
+            output,
+        ],
         wrap=True,
     )
     return (
@@ -81,6 +101,7 @@ def _(args, mo, timeline):
         agency_role,
         airline,
         airline_role,
+        card_text_scale,
         crew_list_title,
         output,
         transparent,
@@ -94,27 +115,45 @@ def _(
     airline,
     airline_role,
     args,
+    card_text_scale,
     crew_list_title,
     output,
     transparent,
 ):
     interface = args.interface(
-        airline, airline_role, crew_list_title, agency, agency_role, transparent, output,
+        airline,
+        airline_role,
+        crew_list_title,
+        agency,
+        agency_role,
+        card_text_scale,
+        transparent,
+        output,
     )
     interface
     return (interface,)
 
 
 @app.cell
-def _(agency, agency_role, airline, airline_role, crew_list_title):
-    live_labels = {
-        "airline": airline.value,
-        "airline_role": airline_role.value,
-        "list": crew_list_title.value,
-        "agency": agency.value,
-        "agency_role": agency_role.value,
+def _(
+    agency,
+    agency_role,
+    airline,
+    airline_role,
+    card_text_scale,
+    crew_list_title,
+):
+    live_overrides = {
+        "labels": {
+            "airline": airline.value,
+            "airline_role": airline_role.value,
+            "list": crew_list_title.value,
+            "agency": agency.value,
+            "agency_role": agency_role.value,
+        },
+        "card_text_scale": card_text_scale.value,
     }
-    return (live_labels,)
+    return (live_overrides,)
 
 
 @app.cell
@@ -144,8 +183,8 @@ def _(chapter, mo, timeline):
 
 
 @app.cell
-def _(live_labels, mo, render_scene, state_at, time, timeline, transparent):
-    frame_state = state_at(timeline, time.value) | {"labels": live_labels}
+def _(live_overrides, mo, render_scene, state_at, time, timeline, transparent):
+    frame_state = state_at(timeline, time.value) | live_overrides
     scene_svg = render_scene(frame_state, width=1080, height=1920, transparent=transparent.value)
     mo.Html(
         '<div style="width:432px;max-width:100%;line-height:0;border:1px solid #dbe0e6;'
@@ -179,7 +218,7 @@ def _(
     Path,
     encode_video,
     export_button,
-    live_labels,
+    live_overrides,
     mo,
     output,
     render_scene,
@@ -192,7 +231,7 @@ def _(
     with mo.status.spinner("Exporting video..."):
         frames = encode_video(
             lambda t: render_scene(
-                state_at(timeline, t) | {"labels": live_labels},
+                state_at(timeline, t) | live_overrides,
                 width=timeline["width"],
                 height=timeline["height"],
                 transparent=transparent.value,
