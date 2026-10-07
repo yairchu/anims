@@ -20,6 +20,7 @@ LIST_SCALE, LIST_HALF_HEIGHT = .9, 90
 # Enlarged mid-screen so the roster can be read.
 ZOOM_CENTER, ZOOM_SCALE = (360, 470), 2.6
 SEND_ROUTE = (ISSUED, (170, 380), (170, 500), FILED)
+DISCARD_SPIN_END = .75
 FLAGGED_ROW = 2
 ROWS = (-34, -6, 22, 50, 78)
 PLANE = ("M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 "
@@ -36,12 +37,19 @@ def discard_scale(discard):
 
 
 def discard_route(card_scale):
-    """Rises out of the authority's card first, then arcs around into the bin.
+    """Rises out of the authority's card, arcs over, and drops straight into the bin.
 
-    Larger cards need a higher arc for the list to clear them.
+    The last control point sits above the bin, so the list falls through the
+    opening rather than through its walls. Larger cards need a higher arc for
+    the list to clear them.
     """
     lift = 240 * (card_scale - 1)
-    return (FILED, (370, 380 - lift), (660, 560 - lift), (BIN[0], BIN[1] + 2))
+    return (FILED, (600, 300 - lift), (BIN[0], 520), (BIN[0], BIN[1] + 10))
+
+
+def discard_spin(discard):
+    """One full tumble, done before the drop, so the list enters the bin upright."""
+    return 360 * clamp(discard / DISCARD_SPIN_END)
 
 
 @cache
@@ -125,7 +133,7 @@ def render_crew_list(state, *, width=1080, height=1920, transparent=False):
         position = mix(AIRLINE, ISSUED, list_in)
     x, y = mix(position, ZOOM_CENTER, zoom)
     scale = LIST_SCALE + (ZOOM_SCALE - LIST_SCALE) * zoom if zoom else discard_scale(discard)
-    roster = (f'<g id="crew-list" transform="translate({x:g} {y:g}) rotate({200*discard:g}) scale({scale:g})" '
+    roster = (f'<g id="crew-list" transform="translate({x:g} {y:g}) rotate({discard_spin(discard):g}) scale({scale:g})" '
               f'opacity="{clamp(3*list_in):g}">{crew_list(labels.get("list", "רשימת אנשי צוות"), flag)}</g>')
     in_front = zoom > 0 or (discard > 0 and discard >= clears_card(card_scale))
 

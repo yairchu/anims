@@ -1,5 +1,6 @@
 """The crew list travels airline → authority → bin, leaving the caption area clear."""
 
+import math
 import subprocess
 import unittest
 import xml.etree.ElementTree as ET
@@ -7,7 +8,9 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import resvg_py
 
+import crew_list_scene as scene
 from animation_scene import render_scene
+from tunnels_scene import cubic
 from animation_timeline import load_scene, state_at
 from export_video import parse_options
 
@@ -53,6 +56,23 @@ class CrewListTests(unittest.TestCase):
         ids = [element.get("id") for element in self.render(11.5, card_text_scale=1.5).iter()
                if element.get("id")]
         self.assertGreater(ids.index("crew-list"), ids.index("agency"))
+
+    def test_list_enters_the_bin_through_its_opening(self):
+        rim = scene.BIN[1] - 58 * scene.BIN_SCALE
+        opening = 50 * scene.BIN_SCALE - 4
+        for card_scale in (1, 1.5):
+            route = scene.discard_route(card_scale)
+            for step in range(1001):
+                discard = step / 1000
+                x, y = cubic(route, discard)
+                size = scene.discard_scale(discard)
+                angle = math.radians(scene.discard_spin(discard))
+                for cx, cy in ((-70, -90), (70, -90), (70, 90), (-70, 90)):
+                    px = x + size * (cx * math.cos(angle) - cy * math.sin(angle))
+                    py = y + size * (cx * math.sin(angle) + cy * math.cos(angle))
+                    if py > rim:
+                        self.assertLess(abs(px - scene.BIN[0]), opening,
+                                        f"Crosses the bin's wall at discard={discard}, card scale {card_scale}")
 
     def test_caption_area_stays_clear(self):
         for scale in (1, 1.5):
