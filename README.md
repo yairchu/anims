@@ -36,9 +36,11 @@ uv run python animation_preview.py --scene crew_list
 
 `uv run marimo edit quote_chain.py` opens a portrait chain of quotes. A speaker's
 face appears and their quote is revealed below it at speaking pace, beside a
-pulsing "speaking" ring. While they speak, the next speaker appears beneath;
-the camera then scrolls to them and the cycle repeats. The chain can close on
-its first speaker (`closing_speaker`).
+pulsing "speaking" ring. The camera then scrolls up: the next speaker appears
+above, and their quote about the previous speaker fills the space between the
+two faces, while the earlier quote fades away below. The chain can close on its
+first speaker (`closing_speaker`), whose opening quote then returns above the
+face it was about.
 
 Speakers, quotes, sources, and timing live in `timeline_quote_chain.json`,
 which reloads automatically. Each quote has its own `duration`: set it to the

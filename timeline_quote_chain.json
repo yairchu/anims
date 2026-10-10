@@ -7,7 +7,6 @@
   "timing": {
     "intro": 0.6,
     "pause": 0.3,
-    "next_lead": 0.8,
     "hold": 0.5,
     "scroll": 0.9,
     "outro": 2
