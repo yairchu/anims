@@ -1,4 +1,6 @@
-"""Each quote reveals over its audio duration; the next speaker then appears above, over their target."""
+"""Each quote reveals over its audio duration; the next speaker then appears above, over their target.
+
+When the next quote's target isn't the previous speaker, the camera pans left to a new strip instead."""
 
 import re
 import unittest
@@ -7,6 +9,7 @@ import xml.etree.ElementTree as ET
 from animation_scene import render_scene
 from animation_timeline import load_scene, state_at
 from export_video import parse_options
+from quote_chain_scene import PAN
 
 SVG = "{http://www.w3.org/2000/svg}"
 
@@ -24,7 +27,12 @@ class QuoteChainTests(unittest.TestCase):
 
     def camera(self, time):
         transform = next(g for g in self.render(time).iter(SVG + "g") if g.get("font-family")).get("transform")
-        return float(re.search(r"translate\(0 (\S+)\)", transform).group(1))
+        return tuple(map(float, re.search(r"translate\((\S+) (\S+)\)", transform).groups()))
+
+    def breaks(self):
+        """Indices of quotes whose target isn't the previous quote's speaker."""
+        quotes = self.timeline["quotes"]
+        return [i for i in range(1, len(quotes)) if quotes[i]["about"] != quotes[i - 1]["speaker"]]
 
     def test_quotes_follow_their_audio_durations(self):
         for quote, s in zip(self.timeline["quotes"], self.schedule):
@@ -43,12 +51,16 @@ class QuoteChainTests(unittest.TestCase):
                            for name in ("smotrich", "netanyahu"))
         self.assertLess(speaker, target, "Smotrich appears above Netanyahu")
 
-    def test_camera_scrolls_one_speaker_per_quote(self):
+    def test_camera_scrolls_up_or_pans_left_once_per_quote(self):
         first, second = self.schedule[:2]
-        self.assertEqual(self.camera(first["end"]), 0)
-        step = self.camera(second["start"])
+        self.assertEqual(self.camera(first["end"]), (0, 0))
+        _, step = self.camera(second["start"])
         self.assertGreater(step, 0)
-        self.assertAlmostEqual(self.camera(self.timeline["duration"]), step * len(self.schedule))
+        breaks = len(self.breaks())
+        self.assertGreater(breaks, 0, "The sample chain has breaks to test")
+        pan, rise = self.camera(self.timeline["duration"])
+        self.assertAlmostEqual(rise, step * (len(self.schedule) - breaks))
+        self.assertAlmostEqual(pan, PAN * breaks)
 
     def face_x(self, time, name):
         return [float(re.search(r"translate\((\S+) ", g.get("transform")).group(1))
@@ -59,11 +71,19 @@ class QuoteChainTests(unittest.TestCase):
         self.assertIn("face-ben_gvir", ids)
         self.assertIn("face-netanyahu", ids)
 
-    def test_a_different_target_takes_the_place_of_the_previous_speaker(self):
-        last = self.schedule[-1]
-        self.assertEqual(self.face_x(last["start"] - .3, "yair_netanyahu"), [360])
-        self.assertGreater(self.face_x(last["end"], "yair_netanyahu")[0], 360, "Yair steps aside")
-        self.assertIn(360, self.face_x(last["end"], "netanyahu"), "Netanyahu takes his place")
+    def test_a_chain_break_pans_left_to_a_new_strip(self):
+        index = self.breaks()[-1]
+        before, during = self.schedule[index - 1], self.schedule[index]
+        quote = self.timeline["quotes"][index]
+        pan_before, rise_before = self.camera(before["end"])
+        pan_after, rise_after = self.camera(during["start"])
+        self.assertGreater(pan_after, pan_before, "The camera pans left")
+        self.assertEqual(rise_after, rise_before, "and doesn't scroll up")
+        # On screen, the new speaker and target sit where the previous ones were.
+        target_x = [x + pan_after for x in self.face_x(during["start"], quote["about"])]
+        speaker_x = [x + pan_after for x in self.face_x(during["start"], quote["speaker"])]
+        self.assertIn(360, target_x)
+        self.assertIn(360, speaker_x)
 
     def test_chain_closes_on_the_first_speaker_and_quote(self):
         ids = self.ids(self.timeline["duration"])
