@@ -32,6 +32,28 @@ uv run python flydubai_crew_list.py --transparent    # output/flydubai-crew-list
 uv run python animation_preview.py --scene crew_list
 ```
 
+## Quote chain · who said what about whom
+
+`uv run marimo edit quote_chain.py` opens a portrait chain of quotes. A speaker's
+face appears and their quote is revealed below it at speaking pace, beside a
+pulsing "speaking" ring. While they speak, the next speaker appears beneath;
+the camera then scrolls to them and the cycle repeats. The chain can close on
+its first speaker (`closing_speaker`).
+
+Speakers, quotes, sources, and timing live in `timeline_quote_chain.json`,
+which reloads automatically. Each quote has its own `duration`: set it to the
+length of its audio clip. The notebook's **Audio cue sheet** lists when each
+clip should start in the editor. No audio is baked in. Portraits are PNGs named
+by speaker id (`ben_gvir.png`, `saar.png`, `yair_netanyahu.png`, ...); missing
+ones show a silhouette. Rerun the notebook's asset cell after adding one. Quotes
+are the on-screen text here, so this scene uses the whole frame rather than
+leaving the bottom clear for captions.
+
+```sh
+uv run python export_video.py --scene quote_chain --output output/quote-chain.mp4
+uv run python animation_preview.py --scene quote_chain
+```
+
 ## Tunnels · 2014 → 2026
 
 The second video has its own notebook and artwork, sharing the timeline engine,

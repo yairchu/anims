@@ -192,7 +192,8 @@ ASSET_FILES = {
 
 
 ACTOR_FILES = {"netanyahu": "netanyahu.png", "abbas": "mansur_abbas.png", "smotrich": "smotrich.png",
-               "bennett": "bennett.png", "gantz": "gantz.png", "winter": "winter.png"}
+               "bennett": "bennett.png", "gantz": "gantz.png", "winter": "winter.png",
+               "ben_gvir": "ben_gvir.png", "saar": "saar.png", "yair_netanyahu": "yair_netanyahu.png"}
 
 
 def available_asset_files():
@@ -324,6 +325,11 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
         from crew_list_scene import render_crew_list
 
         return render_crew_list(state, width=width, height=height, transparent=transparent)
+    if state.get("scene") == "quote_chain":
+        from quote_chain_scene import render_quote_chain
+
+        return render_quote_chain(state, assets=embedded_assets() if assets is None else assets,
+                                  width=width, height=height, transparent=transparent)
     if state.get("scene") == "tunnels":
         from tunnels_scene import render_tunnels
 

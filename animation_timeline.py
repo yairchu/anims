@@ -5,8 +5,8 @@ from pathlib import Path
 
 DEFAULT_TIMELINE = Path(__file__).with_name("timeline.json")
 METER_SCENE_LABELS = {"Meter introduction": "intro", "Blocked partnership": "blocked", "Escalation": "escalation", "Full sequence": "full"}
-SCENE_LABELS = METER_SCENE_LABELS | {"Tunnels · 2014 → 2026": "tunnels", "Phone · notification dismissed": "phone", "FlyDubai · crew list binned": "crew_list"}
-SCENE_FILES = {"intro": "timeline_intro.json", "blocked": "timeline_blocked.json", "escalation": "timeline.json", "tunnels": "timeline_tunnels.json", "phone": "timeline_phone.json", "crew_list": "timeline_crew_list.json"}
+SCENE_LABELS = METER_SCENE_LABELS | {"Tunnels · 2014 → 2026": "tunnels", "Phone · notification dismissed": "phone", "FlyDubai · crew list binned": "crew_list", "Quote chain · who said what about whom": "quote_chain"}
+SCENE_FILES = {"intro": "timeline_intro.json", "blocked": "timeline_blocked.json", "escalation": "timeline.json", "tunnels": "timeline_tunnels.json", "phone": "timeline_phone.json", "crew_list": "timeline_crew_list.json", "quote_chain": "timeline_quote_chain.json"}
 PHONE_TRACKS = {"notification_in", "dismiss", "touch", "like", "like_touch"}
 CREW_LIST_TRACKS = {"cards", "list_in", "zoom", "flag", "send", "bin_in", "discard"}
 TUNNEL_TRACKS = {"hierarchy", "knowledge", "withheld", "question", "request", "disclosure", "surprise", "cabinet_update", "modern", "alignment"}
@@ -32,6 +32,10 @@ def sample(keys, time):
 
 def load_timeline(path=DEFAULT_TIMELINE):
     data = json.loads(Path(path).read_text())
+    if data.get("scene") == "quote_chain":
+        from quote_chain_scene import build_timeline
+
+        data = build_timeline(data)
     for name in ("duration", "fps", "width", "height"):
         value = data[name]
         if not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
@@ -42,8 +46,8 @@ def load_timeline(path=DEFAULT_TIMELINE):
     scene = data.get("scene", "escalation")
     if scene not in SCENE_FILES:
         raise ValueError(f"Unknown scene: {scene}")
-    required = PHONE_TRACKS if scene == "phone" else CREW_LIST_TRACKS if scene == "crew_list" else TUNNEL_TRACKS if scene == "tunnels" else TRACKS | (BLOCKED_TRACKS if scene == "blocked" else REVEAL_TRACKS if scene == "intro" else set())
-    optional = set() if scene in {"tunnels", "phone", "crew_list"} else REVEAL_TRACKS
+    required = set() if scene == "quote_chain" else PHONE_TRACKS if scene == "phone" else CREW_LIST_TRACKS if scene == "crew_list" else TUNNEL_TRACKS if scene == "tunnels" else TRACKS | (BLOCKED_TRACKS if scene == "blocked" else REVEAL_TRACKS if scene == "intro" else set())
+    optional = set() if scene in {"tunnels", "phone", "crew_list", "quote_chain"} else REVEAL_TRACKS
     if not required <= set(data["tracks"]) or set(data["tracks"]) - required - optional:
         raise ValueError(f"Timeline must define these tracks: {sorted(required)}")
     for name, keys in data["tracks"].items():
@@ -78,6 +82,10 @@ def state_at(timeline, time):
     if not math.isfinite(time):
         raise ValueError("Animation time must be finite")
     time = max(0, min(timeline["duration"], time))
+    if timeline.get("scene") == "quote_chain":
+        from quote_chain_scene import chain_state
+
+        return chain_state(timeline, time)
     if "segments" in timeline:
         for index, segment in enumerate(timeline["segments"]):
             end = segment["start"] + segment["duration"]

@@ -1,0 +1,31 @@
+{
+  "scene": "quote_chain",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "quote_text_scale": 1,
+  "timing": {
+    "intro": 0.6,
+    "pause": 0.3,
+    "next_lead": 0.8,
+    "hold": 0.5,
+    "scroll": 0.9,
+    "outro": 2
+  },
+  "speakers": {
+    "netanyahu": {"name": "בנימין נתניהו", "role": ""},
+    "smotrich": {"name": "בצלאל סמוטריץ׳", "role": ""},
+    "ben_gvir": {"name": "איתמר בן גביר", "role": ""},
+    "saar": {"name": "גדעון סער", "role": ""},
+    "yair_netanyahu": {"name": "יאיר נתניהו", "role": "בנו של ראש הממשלה"}
+  },
+  "quotes": [
+    {"speaker": "netanyahu", "about": "בן גביר", "text": "איתמר בן גביר לא יהיה שר בממשלתי", "source": "וידאו · N12 · 2021", "duration": 3},
+    {"speaker": "smotrich", "about": "נתניהו", "text": "הוא שקרן בן שקרן", "source": "הקלטה · 2022", "duration": 2.5},
+    {"speaker": "ben_gvir", "about": "סמוטריץ׳", "text": "יהיר ושחצן... לא מבין באף אחד מהם", "source": "בפני מקורבים · 2024", "duration": 3},
+    {"speaker": "saar", "about": "בן גביר", "text": "לא, אתה לא הפנים של ישראל", "source": "ציוץ · 2026", "duration": 2.5},
+    {"speaker": "yair_netanyahu", "about": "סער", "text": "העבדים של החונטה", "source": "הקלטה · 2020", "duration": 2.5},
+    {"speaker": "ben_gvir", "about": "נתניהו", "text": "...להתבייש להצטלם איתי... משחק ציני?!", "source": "ציוץ · 2026", "duration": 3.5}
+  ],
+  "closing_speaker": "netanyahu"
+}
