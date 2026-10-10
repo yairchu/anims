@@ -49,7 +49,8 @@ which reloads automatically. Each quote has its own `duration`: set it to the
 length of its audio clip. The notebook's **Audio cue sheet** lists when each
 clip should start in the editor. No audio is baked in. Portraits are PNGs named
 by speaker id (`ben_gvir.png`, `saar.png`, `yair_netanyahu.png`, ...); missing
-ones show a silhouette. Rerun the notebook's asset cell after adding one. Quotes
+ones show a silhouette; `quote_chain_portraits.md` has generation prompts. Rerun
+the notebook's asset cell after adding one. Quotes
 are the on-screen text here, so this scene uses the whole frame rather than
 leaving the bottom clear for captions.
 
