@@ -1,7 +1,8 @@
 """A chain of quotes: each speaker appears above the one they talk about.
 
 The camera scrolls up a vertical strip of portraits, so each quote sits between
-its speaker and its target. Each quote's
+its speaker and its target. When a quote's target isn't the previous speaker,
+the target takes that place and the previous speaker steps aside. Each quote's
 duration is the length of its audio clip, so the text reveal lines up with the
 recordings placed under the animation in the video editor.
 """
@@ -22,6 +23,7 @@ QUOTE_SIZE, QUOTE_CHARS, QUOTE_LINES = 52, 22, 3
 # the correct side of each Hebrew line.
 RLM = "\u200f"
 TIMING = {"intro": .6, "pause": .3, "hold": .5, "scroll": .9, "outro": 2}
+SWAP, ASIDE_X, ASIDE_SCALE = .6, 230, .7
 
 
 def build_timeline(data):
@@ -33,7 +35,7 @@ def build_timeline(data):
     if not quotes:
         raise ValueError("A quote chain needs at least one quote")
     closing = data.get("closing_speaker")
-    for name in [q["speaker"] for q in quotes] + ([closing] if closing else []):
+    for name in [q[key] for q in quotes for key in ("speaker", "about")] + ([closing] if closing else []):
         if name not in speakers:
             raise ValueError(f"Unknown speaker: {name}")
     schedule, chapters, cursor = [], [], timing["intro"]
@@ -45,7 +47,7 @@ def build_timeline(data):
         end = start + duration
         scroll = end + timing["hold"]
         schedule.append(dict(start=start, end=end, scroll=scroll, scroll_end=scroll + timing["scroll"]))
-        chapters.append(dict(time=start, label=f"{speakers[quote['speaker']]['name']} על {quote['about']}"))
+        chapters.append(dict(time=start, label=f"{speakers[quote['speaker']]['name']} על {speakers[quote['about']]['name']}"))
         cursor = scroll + timing["scroll"]
     # The closing speaker needs one more scroll; without one, the chain ends on the last quote.
     if closing:
@@ -69,11 +71,11 @@ def chain_state(timeline, time):
 def cue_sheet(timeline):
     """When each quote's audio should start, for placing the clips in the editor."""
     return [dict(start=round(s["start"], 2), speaker=timeline["speakers"][q["speaker"]]["name"],
-                 about=q["about"], quote=q["text"], duration=q["duration"])
+                 about=timeline["speakers"][q["about"]]["name"], quote=q["text"], duration=q["duration"])
             for q, s in zip(timeline["quotes"], timeline["schedule"])]
 
 
-def face(name, speaker, y, appear, speaking, time, assets):
+def face(name, speaker, y, appear, speaking, time, assets, x=360, size=1):
     """Portrait, name and role; a pulsing ring and sound bars while speaking."""
     if appear <= 0:
         return ""
@@ -88,7 +90,7 @@ def face(name, speaker, y, appear, speaking, time, assets):
         f'<rect x="{i*15 - 34}" y="{-h/2:g}" width="8" height="{h:g}" rx="4" fill="{BLUE}"/>'
         for i, h in ((i, 8 + 34 * speaking * abs(math.sin(time * 9 + i * 1.7))) for i in range(5)))
     role = speaker.get("role")
-    return (f'<g id="face-{name}" transform="translate(360 {y:g}) scale({.7 + .3*appear:g})" opacity="{appear:g}">'
+    return (f'<g id="face-{name}" transform="translate({x:g} {y:g}) scale({(.7 + .3*appear) * size:g})" opacity="{appear:g}">'
             f'<circle r="{FACE_R + 4 + 8*speaking:g}" fill="none" stroke="{BLUE}" stroke-width="5" opacity="{.5*speaking:g}"/>'
             f'<circle r="{FACE_R + 3}" fill="white" stroke="#e4e6e9" stroke-width="2"/>'
             + portrait
@@ -99,7 +101,7 @@ def face(name, speaker, y, appear, speaking, time, assets):
 
 
 def quote_block(block_id, quote, y, reveal, tag, scale, opacity=1):
-    """The 'about' tag, then the quote revealed right to left at speaking pace."""
+    """The quote, revealed right to left at speaking pace, and its source."""
     # Long quotes shrink to fit QUOTE_LINES, so the next face still has room.
     while True:
         size = QUOTE_SIZE * scale
@@ -108,11 +110,11 @@ def quote_block(block_id, quote, y, reveal, tag, scale, opacity=1):
         if len(lines) <= QUOTE_LINES or scale < .6:
             break
         scale *= .9
-    parts = [text(360, y, f'על {quote["about"]}', 30, BLUE, "700", opacity=f"{tag:g}")]
+    parts = []
     total = sum(map(len, lines))
     done = 0
     for line_index, line in enumerate(lines):
-        baseline = y + 72 + line_index * size * 1.3
+        baseline = y + 32 + line_index * size * 1.3
         progress = clamp((reveal * total - done) / len(line))
         done += len(line)
         if progress <= 0:
@@ -128,7 +130,7 @@ def quote_block(block_id, quote, y, reveal, tag, scale, opacity=1):
                 f'<tspan fill-opacity="0">{html.escape(line[shown:] + RLM)}</tspan></text>')
         else:
             parts.append(text(360, baseline, RLM + line + RLM, size, INK, "700"))
-    source_y = y + 72 + (len(lines) - 1) * size * 1.3 + 54
+    source_y = y + 32 + (len(lines) - 1) * size * 1.3 + 54
     parts.append(text(360, source_y, quote["source"], 25, MUTED, opacity=f"{tag:g}"))
     return f'<g id="quote-{block_id}" opacity="{opacity:g}">{"".join(parts)}</g>'
 
@@ -138,21 +140,36 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
     speakers, quotes = state["speakers"], state["quotes"]
     closing = state.get("closing_speaker")
     faces = [q["speaker"] for q in quotes] + ([closing] if closing else [])
+    reprise = closing and closing == quotes[0]["speaker"]
+    # Who each face's quote is about; the reprise repeats the first quote's target.
+    targets = [q["about"] for q in quotes] + ([quotes[0]["about"]] if reprise else [])
 
     def scrolled(s):
         return ease((time - s["scroll"]) / timing["scroll"]) if timing["scroll"] else float(time >= s["scroll"])
 
+    def ramp(start, duration):
+        return ease((time - start) / duration) if duration else float(time >= start)
+
     camera = STEP * sum(scrolled(s) for s in schedule[:len(faces) - 1])
-    parts = []
+    # The chain opens with the first quote's target below its speaker.
+    parts = [face(targets[0], speakers[targets[0]], FACE_Y + STEP, ramp(0, timing["intro"]), 0, time, assets)]
     for index, name in enumerate(faces):
         y = FACE_Y - index * STEP
         # Each new speaker fades in from above as the camera scrolls up to them.
-        appear = (ease(time / timing["intro"]) if timing["intro"] else 1) if index == 0 else scrolled(schedule[index - 1])
+        appear = ramp(0, timing["intro"]) if index == 0 else scrolled(schedule[index - 1])
         speaking = 0
         if index < len(quotes):
             s = schedule[index]
             speaking = min(ease((time - s["start"] + .2) / .2), ease((s["end"] + .2 - time) / .2))
-        parts.append(face(name, speakers[name], y, appear, speaking, time, assets))
+        x, size = 360, 1
+        # The next quote is about someone else: they take this place, and this speaker steps aside.
+        if index + 1 < len(targets) and targets[index + 1] != name:
+            swap = ramp(schedule[index]["scroll_end"], SWAP)
+            x, size = 360 + ASIDE_X * swap, 1 - (1 - ASIDE_SCALE) * swap
+            # Fades in once the speaker has partly cleared the spot, so their names don't overlap.
+            parts.append(face(targets[index + 1], speakers[targets[index + 1]], y, clamp((swap - .35) / .65),
+                              0, time, assets))
+        parts.append(face(name, speakers[name], y, appear, speaking, time, assets, x, size))
     def quote_y(index, speaker):
         return FACE_Y - index * STEP + FACE_R + (140 if speakers[speaker].get("role") else 110)
 
@@ -165,7 +182,7 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
             reveal = clamp((time - s["start"]) / quote["duration"])
             parts.append(quote_block(index, quote, quote_y(index, quote["speaker"]), reveal, tag, scale, fade))
     # Back where it began: the first quote returns above the face it was about.
-    if closing and closing == quotes[0]["speaker"] and (appear := scrolled(schedule[-1])) > 0:
+    if reprise and (appear := scrolled(schedule[-1])) > 0:
         parts.append(quote_block("reprise", quotes[0], quote_y(len(quotes), closing), 1, appear, scale))
     background = "" if transparent else '<rect width="720" height="1280" fill="white"/>'
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 720 1280" '

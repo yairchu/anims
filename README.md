@@ -40,7 +40,9 @@ pulsing "speaking" ring. The camera then scrolls up: the next speaker appears
 above, and their quote about the previous speaker fills the space between the
 two faces, while the earlier quote fades away below. The chain can close on its
 first speaker (`closing_speaker`), whose opening quote then returns above the
-face it was about.
+face it was about. The chain opens with the first quote's target below its
+speaker. Each quote's `about` is a speaker id; when it isn't the previous
+speaker, that speaker steps aside to the right and the target takes their place.
 
 Speakers, quotes, sources, and timing live in `timeline_quote_chain.json`,
 which reloads automatically. Each quote has its own `duration`: set it to the

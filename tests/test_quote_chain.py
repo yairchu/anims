@@ -50,9 +50,24 @@ class QuoteChainTests(unittest.TestCase):
         self.assertGreater(step, 0)
         self.assertAlmostEqual(self.camera(self.timeline["duration"]), step * len(self.schedule))
 
+    def face_x(self, time, name):
+        return [float(re.search(r"translate\((\S+) ", g.get("transform")).group(1))
+                for g in self.render(time).iter(SVG + "g") if g.get("id") == f"face-{name}"]
+
+    def test_chain_opens_with_the_first_target_below(self):
+        ids = self.ids(self.timeline["timing"]["intro"])
+        self.assertIn("face-ben_gvir", ids)
+        self.assertIn("face-netanyahu", ids)
+
+    def test_a_different_target_takes_the_place_of_the_previous_speaker(self):
+        last = self.schedule[-1]
+        self.assertEqual(self.face_x(last["start"] - .3, "yair_netanyahu"), [360])
+        self.assertGreater(self.face_x(last["end"], "yair_netanyahu")[0], 360, "Yair steps aside")
+        self.assertIn(360, self.face_x(last["end"], "netanyahu"), "Netanyahu takes his place")
+
     def test_chain_closes_on_the_first_speaker_and_quote(self):
         ids = self.ids(self.timeline["duration"])
-        self.assertEqual(ids.count("face-netanyahu"), 2)
+        self.assertEqual(ids.count("face-netanyahu"), 3)
         self.assertIn("quote-reprise", ids)
 
     def test_long_quotes_fit_three_lines(self):

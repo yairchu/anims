@@ -19,12 +19,12 @@
     "yair_netanyahu": {"name": "יאיר נתניהו", "role": "בנו של ראש הממשלה"}
   },
   "quotes": [
-    {"speaker": "netanyahu", "about": "בן גביר", "text": "איתמר בן גביר לא יהיה שר בממשלתי", "source": "וידאו · N12 · 2021", "duration": 3},
-    {"speaker": "smotrich", "about": "נתניהו", "text": "הוא שקרן בן שקרן", "source": "הקלטה · 2022", "duration": 2.5},
-    {"speaker": "ben_gvir", "about": "סמוטריץ׳", "text": "יהיר ושחצן... לא מבין באף אחד מהם", "source": "בפני מקורבים · 2024", "duration": 3},
-    {"speaker": "saar", "about": "בן גביר", "text": "לא, אתה לא הפנים של ישראל", "source": "ציוץ · 2026", "duration": 2.5},
-    {"speaker": "yair_netanyahu", "about": "סער", "text": "העבדים של החונטה", "source": "הקלטה · 2020", "duration": 2.5},
-    {"speaker": "ben_gvir", "about": "נתניהו", "text": "...להתבייש להצטלם איתי... משחק ציני?!", "source": "ציוץ · 2026", "duration": 3.5}
+    {"speaker": "netanyahu", "about": "ben_gvir", "text": "איתמר בן גביר לא יהיה שר בממשלתי", "source": "וידאו · N12 · 2021", "duration": 3},
+    {"speaker": "smotrich", "about": "netanyahu", "text": "הוא שקרן בן שקרן", "source": "הקלטה · 2022", "duration": 2.5},
+    {"speaker": "ben_gvir", "about": "smotrich", "text": "יהיר ושחצן", "source": "בפני מקורבים · 2024", "duration": 3},
+    {"speaker": "saar", "about": "ben_gvir", "text": "גרמת נזק ביודעין למדינה", "source": "ציוץ · 2026", "duration": 2.5},
+    {"speaker": "yair_netanyahu", "about": "saar", "text": "גדעון סער אנס, וסידר עבודה לנאנסת שלו", "source": "הקלטה · 2020", "duration": 2.5},
+    {"speaker": "ben_gvir", "about": "netanyahu", "text": "...להתבייש להצטלם איתי... משחק ציני?!", "source": "ציוץ · 2026", "duration": 3.5}
   ],
   "closing_speaker": "netanyahu"
 }
