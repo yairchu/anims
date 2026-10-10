@@ -6,6 +6,7 @@ duration is the length of its audio clip, so the text reveal lines up with the
 recordings placed under the animation in the video editor.
 """
 
+import html
 import math
 import textwrap
 
@@ -117,12 +118,14 @@ def quote_block(block_id, quote, y, reveal, tag, scale, opacity=1):
         if progress <= 0:
             continue
         if progress < 1:
-            # Hebrew reads right to left; uncover each line from its right edge.
-            width = min(680, len(line) * size * .5 + 20)
-            clip_id = f"reveal-{block_id}-{line_index}"
-            parts.append(f'<clipPath id="{clip_id}"><rect x="{360 + width/2 - width*progress:g}" '
-                         f'y="{baseline - size*1.1:g}" width="{width*progress:g}" height="{size*1.5:g}"/></clipPath>')
-            parts.append(text(360, baseline, RLM + line + RLM, size, INK, "700", clip_path=f"url(#{clip_id})"))
+            # The unspoken rest is laid out but transparent, so the line keeps its
+            # final, centered position. A clip path would need an id reference,
+            # which browsers briefly fail to resolve while the notebook patches it.
+            shown = round(len(line) * progress)
+            parts.append(
+                f'<text x="360" y="{baseline:g}" text-anchor="middle" direction="rtl" font-size="{size:g}" '
+                f'font-weight="700" fill="{INK}"><tspan>{html.escape(RLM + line[:shown])}</tspan>'
+                f'<tspan fill-opacity="0">{html.escape(line[shown:] + RLM)}</tspan></text>')
         else:
             parts.append(text(360, baseline, RLM + line + RLM, size, INK, "700"))
     source_y = y + 72 + (len(lines) - 1) * size * 1.3 + 54
