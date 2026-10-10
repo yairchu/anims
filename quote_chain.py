@@ -9,12 +9,14 @@ def _():
     import marimo as mo
     import moops
     from pathlib import Path
-    from animation_scene import notebook_asset_urls, render_scene
+    from animation_scene import ACTOR_FILES, ASSET_FILES, notebook_asset_urls, render_scene
     from animation_timeline import load_timeline, state_at
     from export_video import encode_video
     from quote_chain_scene import cue_sheet
 
     return (
+        ACTOR_FILES,
+        ASSET_FILES,
         Path,
         cue_sheet,
         encode_video,
@@ -53,8 +55,38 @@ def _(load_timeline, timeline_file, timeline_path):
 
 
 @app.cell
-def _(notebook_asset_urls):
-    # Rerun after adding or replacing a portrait (ben_gvir.png, saar.png, ...).
+def _(mo):
+    get_asset_mtimes, set_asset_mtimes = mo.state(None)
+    return get_asset_mtimes, set_asset_mtimes
+
+
+@app.cell
+def _(ACTOR_FILES, ASSET_FILES, Path, mo, set_asset_mtimes):
+    # Poll the portraits and icons, including ones that don't exist yet, so
+    # adding or replacing one (ben_gvir.png, saar.png, ...) refreshes the preview.
+    def watch_assets():
+        from time import sleep
+
+        paths = [Path(__file__).with_name(f) for f in (ASSET_FILES | ACTOR_FILES).values()]
+
+        def mtimes():
+            return {p.name: p.stat().st_mtime_ns if p.exists() else None for p in paths}
+
+        last = mtimes()
+        thread = mo.current_thread()
+        while not thread.should_exit:
+            sleep(1)
+            if (current := mtimes()) != last:
+                last = current
+                set_asset_mtimes(current)
+
+    mo.Thread(target=watch_assets, daemon=True).start()
+    return
+
+
+@app.cell
+def _(get_asset_mtimes, notebook_asset_urls):
+    get_asset_mtimes()
     preview_assets = notebook_asset_urls()
     return (preview_assets,)
 
