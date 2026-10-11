@@ -172,7 +172,7 @@ def party_color(state, name):
     return rgb(state.get("parties", {}).get(party, {}).get("color", "#ffffff") if party else "#ffffff")
 
 
-def strip_backgrounds(state, layout, shown, camera_x):
+def strip_backgrounds(state, layout, shown, camera_x, camera_y):
     """One background per strip, a vertical gradient through its faces' party colours.
 
     The gradients depend only on the layout, never on time, so the notebook
@@ -183,7 +183,11 @@ def strip_backgrounds(state, layout, shown, camera_x):
     A pan to a new strip slides the backgrounds along the tilt of their bands
     rather than straight sideways, so the bands hold still on screen while the
     new strip's slanted edge sweeps in along them; once the pan is done they
-    line up with the faces."""
+    line up with the faces.
+
+    Each drawn strip is cropped to the frame: the renderer masks a strip's whole
+    area, most of it off-screen, which made every exported frame slow.
+    Cropping changes nothing visible, as the gradients are in user space."""
     white = [255] * 3
     tilt = math.radians(state.get("background_tilt", TILT))
     parts = []
@@ -222,8 +226,11 @@ def strip_backgrounds(state, layout, shown, camera_x):
             mask = f' mask="url(#strip-{column}-mask)"'
         if column in shown:
             slide = tan * (camera_x - column * PAN)
-            parts.append(f'<rect transform="translate(0 {slide:g})" x="{left - PAN:g}" y="{top - 1280}" width="{width:g}" '
-                         f'height="{bottom - top + 2560}" fill="url(#strip-{column})"{mask}/>')
+            x0, x1 = max(left - PAN, -camera_x - 1), min(left - PAN + width, 721 - camera_x)
+            y0, y1 = max(top - 1280, -camera_y - slide - 1), min(bottom + 1280, 1281 - camera_y - slide)
+            if x0 < x1 and y0 < y1:
+                parts.append(f'<rect transform="translate(0 {slide:g})" x="{x0:g}" y="{y0:g}" width="{x1 - x0:g}" '
+                             f'height="{y1 - y0:g}" fill="url(#strip-{column})"{mask}/>')
     definitions = "".join(part for part in parts if not part.startswith("<rect"))
     return f'<defs>{definitions}</defs>' + "".join(part for part in parts if part.startswith("<rect"))
 
@@ -299,8 +306,10 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
                     old["x"] -= PAN * move
                     old["appear"] *= move < 1
                     new["appear"] = float(move >= 1)
+    # Off-screen faces are left out, sparing the renderer decoding their portraits.
     parts = [face(f["name"], speakers[f["name"]], f["y"], f["appear"], f["speaking"], time, assets, f["x"])
-             for f in faces_drawn]
+             for f in faces_drawn
+             if -camera_x - 400 < f["x"] < 1120 - camera_x and -camera_y - 300 < f["y"] < 1480 - camera_y]
     def quote_at(index, speaker):
         """Below the face at this index, by how much room its name and role take."""
         x, y = position(columns[index], rows[index])
@@ -319,7 +328,7 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
         parts.append(quote_block("reprise", quotes[0], *quote_at(len(quotes), closing), 1, appear, scale))
     # A strip's background shows from when the camera starts panning to it.
     shown = {0} | {columns[k] for k in range(1, len(faces)) if breaks[k] and moves[k - 1] > 0}
-    background = "" if transparent else strip_backgrounds(state, layout, shown, camera_x)
+    background = "" if transparent else strip_backgrounds(state, layout, shown, camera_x, camera_y)
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 720 1280" '
             f'role="img" aria-label="Who said what about whom">'
             f'<defs><clipPath id="face-clip"><circle r="{FACE_R}"/></clipPath></defs>'

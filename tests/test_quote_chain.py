@@ -124,7 +124,8 @@ class QuoteChainTests(unittest.TestCase):
 
     def test_chain_closes_on_the_first_speaker_and_quote(self):
         ids = self.ids(self.timeline["duration"])
-        self.assertEqual(ids.count("face-netanyahu"), 3)
+        # Only the closing copy is on screen; earlier ones are left out.
+        self.assertEqual(ids.count("face-netanyahu"), 1)
         self.assertIn("quote-reprise", ids)
 
     def test_background_runs_through_each_face_party_colour(self):
