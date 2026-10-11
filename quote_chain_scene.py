@@ -178,7 +178,8 @@ def strip_backgrounds(state, layout, shown, camera_x):
 
     A pan to a new strip slides the backgrounds along the tilt of their bands
     rather than straight sideways, so the bands hold still on screen while the
-    new strip's edge sweeps in; once the pan is done they line up with the faces."""
+    new strip's slanted edge sweeps in along them; once the pan is done they
+    line up with the faces."""
     white = [255] * 3
     tilt = math.radians(state.get("background_tilt", TILT))
     parts = []
@@ -195,18 +196,29 @@ def strip_backgrounds(state, layout, shown, camera_x):
         parts.append(f'<linearGradient id="strip-{column}" gradientUnits="userSpaceOnUse" '
                      f'x1="{center:g}" y1="{top}" x2="{center - length * math.sin(tilt):g}" '
                      f'y2="{top + length * math.cos(tilt):g}">{gradient}</linearGradient>')
-        # Strips go leftward, so each one fades out to the right, over the previous strip.
-        mask = ""
+        # Strips go leftward, so each one fades out to the right, over the previous
+        # strip, across a seam at right angles to the bands, which a pan moves it along.
+        # Each strip also reaches a frame width under the next, which mid-pan can
+        # dip its slanted seam left of this strip's frame.
+        tan, mask, width = math.tan(tilt), "", 2 * PAN
         if column:
+            # The camera rests on each speaker in the strip, the lowest one just above
+            # its target. The slanted seam passes the strip's right edge at whichever
+            # end of those views keeps it out of all of them.
+            view_top, view_bottom = top - FACE_Y, bottom - STEP - FACE_Y + 1280
+            x0, y0 = left + PAN, view_bottom if tan > 0 else view_top
+            # Wide enough for the seam's fade wherever a view or a pan can see it.
+            width += (view_bottom - view_top + 2 * PAN * abs(tan)) * abs(tan) + BLEND / math.cos(tilt)
             parts.append(f'<linearGradient id="strip-{column}-edge" gradientUnits="userSpaceOnUse" '
-                         f'x1="{left + PAN:g}" y1="0" x2="{left + PAN + BLEND:g}" y2="0">'
+                         f'x1="{x0:g}" y1="{y0:g}" x2="{x0 + BLEND * math.cos(tilt):g}" '
+                         f'y2="{y0 + BLEND * math.sin(tilt):g}">'
                          '<stop offset="0" stop-color="white"/><stop offset="1" stop-color="black"/></linearGradient>'
-                         f'<mask id="strip-{column}-mask"><rect x="{left:g}" y="{top - 1280}" '
-                         f'width="{PAN + BLEND}" height="{bottom - top + 2560}" fill="url(#strip-{column}-edge)"/></mask>')
+                         f'<mask id="strip-{column}-mask"><rect x="{left - PAN:g}" y="{top - 1280}" '
+                         f'width="{width:g}" height="{bottom - top + 2560}" fill="url(#strip-{column}-edge)"/></mask>')
             mask = f' mask="url(#strip-{column}-mask)"'
         if column in shown:
-            slide = math.tan(tilt) * (camera_x - column * PAN)
-            parts.append(f'<rect transform="translate(0 {slide:g})" x="{left:g}" y="{top - 1280}" width="{PAN + (BLEND if column else 0)}" '
+            slide = tan * (camera_x - column * PAN)
+            parts.append(f'<rect transform="translate(0 {slide:g})" x="{left - PAN:g}" y="{top - 1280}" width="{width:g}" '
                          f'height="{bottom - top + 2560}" fill="url(#strip-{column})"{mask}/>')
     definitions = "".join(part for part in parts if not part.startswith("<rect"))
     return f'<defs>{definitions}</defs>' + "".join(part for part in parts if part.startswith("<rect"))
