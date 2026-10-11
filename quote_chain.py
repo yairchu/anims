@@ -233,19 +233,19 @@ def _(
 ):
     mo.stop(not export_button.value)
     exported = Path(output.value or "output/quote-chain.mp4")
-    with mo.status.spinner("Exporting video..."):
-        frames = encode_video(
-            lambda t: render_scene(
-                state_at(timeline, t) | live_overrides,
-                width=timeline["width"],
-                height=timeline["height"],
-            ),
-            output=exported,
-            fps=timeline["fps"],
-            start=0,
-            end=timeline["duration"],
-            overwrite=True,
-        )
+    frames = encode_video(
+        lambda t: render_scene(
+            state_at(timeline, t) | live_overrides,
+            width=timeline["width"],
+            height=timeline["height"],
+        ),
+        output=exported,
+        fps=timeline["fps"],
+        start=0,
+        end=timeline["duration"],
+        overwrite=True,
+        progress=lambda indices: mo.status.progress_bar(indices, title="Exporting video"),
+    )
     print(f"Saved {exported.resolve()} ({frames} frames)")
     return
 

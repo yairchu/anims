@@ -112,11 +112,14 @@ def parse_options(argv=None):
 
 
 def encode_video(draw_svg, *, output, fps, start, end, transparent=False,
-                 overwrite=False, stills=None, chapters=()):
+                 overwrite=False, stills=None, chapters=(), progress=None):
     """Rasterize draw_svg(time) for each frame and encode an MP4 or a MOV.
 
     A MOV is ProRes, 4444 with alpha when transparent, otherwise 422 HQ, whose
-    10-bit 4:2:2 keeps soft gradients from banding when edited further."""
+    10-bit 4:2:2 keeps soft gradients from banding when edited further.
+
+    progress, if given, wraps the range of frame indices, as a progress bar
+    does; otherwise progress is printed."""
     suffix = output.suffix.lower()
     if suffix not in ((".mov",) if transparent else (".mp4", ".mov")):
         raise ValueError("Use a .mp4 or .mov output" if not transparent
@@ -188,9 +191,9 @@ def encode_video(draw_svg, *, output, fps, start, end, transparent=False,
         with tempfile.TemporaryFile() as errors:
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=errors)
             try:
-                for index in range(frames):
+                for index in (progress or iter)(range(frames)):
                     process.stdin.write(draw(start + index / fps))
-                    if index % max(1, round(fps)) == 0:
+                    if not progress and index % max(1, round(fps)) == 0:
                         print(f"Rendering {index + 1}/{frames} frames", flush=True)
                 process.stdin.close()
                 if process.wait() != 0:
