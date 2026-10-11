@@ -117,10 +117,14 @@ def face(name, speaker, y, appear, speaking, time, assets, x=360):
 
 def quote_block(block_id, quote, x, y, reveal, tag, scale, opacity=1):
     """The quote, revealed right to left at speaking pace, and its source."""
+    # Quotation marks belong to the presentation, including the closing reprise.
+    # Include them before wrapping so they stay attached to the quoted words.
+    # Hebrew reads right to left: use inward-facing curly marks at each end.
+    quoted_text = f'”{quote["text"]}“'
     # Long quotes shrink to fit QUOTE_LINES, so the next face still has room.
     while True:
         size = QUOTE_SIZE * scale
-        lines = textwrap.wrap(quote["text"], round(QUOTE_CHARS * QUOTE_SIZE / size),
+        lines = textwrap.wrap(quoted_text, round(QUOTE_CHARS * QUOTE_SIZE / size),
                               break_long_words=False, break_on_hyphens=False)
         if len(lines) <= QUOTE_LINES or scale < .6:
             break
