@@ -193,7 +193,8 @@ ASSET_FILES = {
 
 ACTOR_FILES = {"netanyahu": "netanyahu.png", "abbas": "mansur_abbas.png", "smotrich": "smotrich.png",
                "bennett": "bennett.png", "gantz": "gantz.png", "winter": "winter.png",
-               "ben_gvir": "ben_gvir.png", "saar": "saar.png", "yair_netanyahu": "yair_netanyahu.png"}
+               "ben_gvir": "ben_gvir.png", "saar": "saar.png", "yair_netanyahu": "yair_netanyahu.png",
+               "miri_regev": "miri_regev.png", "natan_eshel": "natan_eshel.png"}
 
 
 def available_asset_files():

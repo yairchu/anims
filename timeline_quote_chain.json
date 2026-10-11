@@ -16,15 +16,18 @@
     "smotrich": {"name": "בצלאל סמוטריץ׳", "role": ""},
     "ben_gvir": {"name": "איתמר בן גביר", "role": ""},
     "saar": {"name": "גדעון סער", "role": ""},
-    "yair_netanyahu": {"name": "יאיר נתניהו", "role": "בנו של ראש הממשלה"}
+    "yair_netanyahu": {"name": "יאיר נתניהו", "role": "בנו של ראש הממשלה"},
+    "miri_regev": {"name": "מירי רגב", "role": ""},
+    "natan_eshel": {"name": "נתן אשל", "role": "מקורבו של נתיהו"}
   },
   "quotes": [
     {"speaker": "netanyahu", "about": "ben_gvir", "text": "איתמר בן גביר לא יהיה שר בממשלתי", "source": "וידאו · N12 · 2021", "duration": 3},
-    {"speaker": "smotrich", "about": "netanyahu", "text": "הוא שקרן בן שקרן", "source": "הקלטה · 2022", "duration": 2.5},
-    {"speaker": "ben_gvir", "about": "smotrich", "text": "יהיר ושחצן", "source": "בפני מקורבים · 2024", "duration": 3},
+    {"speaker": "smotrich", "about": "netanyahu", "text": "שקרן בן שקרן", "source": "הקלטה · 2022", "duration": 2.5},
+    {"speaker": "miri_regev", "about": "smotrich", "text": "סמוטריץ׳ הוא גזען והומופוב", "source": "וידאו · 2021", "duration": 3},
+    {"speaker": "natan_eshel", "about": "miri_regev", "text": "מירי רגב עושה עבודה מצוינת. זאת אומרת, זה שהיא בהמה בכלל", "source": "הקלטה · 2020", "duration": 4},
+    {"speaker": "ben_gvir", "about": "netanyahu", "text": "להתבייש להצטלם איתי?!", "source": "ציוץ · 2026", "duration": 3.5},
     {"speaker": "saar", "about": "ben_gvir", "text": "גרמת נזק ביודעין למדינה", "source": "ציוץ · 2026", "duration": 2.5},
-    {"speaker": "yair_netanyahu", "about": "saar", "text": "גדעון סער אנס, וסידר עבודה לנאנסת שלו", "source": "הקלטה · 2020", "duration": 2.5},
-    {"speaker": "ben_gvir", "about": "netanyahu", "text": "...להתבייש להצטלם איתי... משחק ציני?!", "source": "ציוץ · 2026", "duration": 3.5}
+    {"speaker": "yair_netanyahu", "about": "saar", "text": "גדעון סער אנס, וסידר עבודה לנאנסת שלו", "source": "הקלטה · 2020", "duration": 2.5}
   ],
   "closing_speaker": "netanyahu"
 }
