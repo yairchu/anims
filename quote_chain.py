@@ -116,23 +116,18 @@ def _(args, mo, timeline):
         help_text="Scale of the quote text; long quotes still shrink to fit three lines",
         show_value=True,
     )
-    transparent = args.checkbox(
-        flag="--transparent",
-        label="Transparent background",
-        help_text="Export a ProRes 4444 MOV with alpha instead of an MP4",
-    )
     output = args.text(
         option="--output",
         label="Output video",
-        help_text="Output path (default: output/quote-chain.mp4, or .mov when transparent)",
+        help_text="Output path (default: output/quote-chain.mp4)",
     )
-    mo.hstack([quote_text_scale, transparent, output], wrap=True)
-    return output, quote_text_scale, transparent
+    mo.hstack([quote_text_scale, output], wrap=True)
+    return output, quote_text_scale
 
 
 @app.cell
-def _(args, output, quote_text_scale, transparent):
-    interface = args.interface(quote_text_scale, transparent, output)
+def _(args, output, quote_text_scale):
+    interface = args.interface(quote_text_scale, output)
     interface
     return (interface,)
 
@@ -178,14 +173,11 @@ def _(
     state_at,
     time,
     timeline,
-    transparent,
 ):
     frame_state = state_at(timeline, time.value) | live_overrides
-    scene_svg = render_scene(frame_state, assets=preview_assets, width=1080, height=1920,
-                             transparent=transparent.value)
+    scene_svg = render_scene(frame_state, assets=preview_assets, width=1080, height=1920)
     mo.Html(
-        '<div style="width:432px;max-width:100%;line-height:0;border:1px solid #dbe0e6;'
-        'background:repeating-conic-gradient(#e8ebef 0% 25%,white 0% 50%) 0 0/24px 24px">'
+        '<div style="width:432px;max-width:100%;line-height:0;border:1px solid #dbe0e6">'
         + scene_svg.replace('width="1080" height="1920"', 'width="432" height="768"', 1)
         + "</div>"
     )
@@ -228,23 +220,20 @@ def _(
     render_scene,
     state_at,
     timeline,
-    transparent,
 ):
     mo.stop(not export_button.value)
-    exported = Path(output.value or f"output/quote-chain.{'mov' if transparent.value else 'mp4'}")
+    exported = Path(output.value or "output/quote-chain.mp4")
     with mo.status.spinner("Exporting video..."):
         frames = encode_video(
             lambda t: render_scene(
                 state_at(timeline, t) | live_overrides,
                 width=timeline["width"],
                 height=timeline["height"],
-                transparent=transparent.value,
             ),
             output=exported,
             fps=timeline["fps"],
             start=0,
             end=timeline["duration"],
-            transparent=transparent.value,
             overwrite=True,
         )
     print(f"Saved {exported.resolve()} ({frames} frames)")
