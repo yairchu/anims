@@ -16,9 +16,10 @@
     "likud": {"name": "הליכוד", "color": "#1f5fd1"},
     "religious_zionism": {"name": "הציונות הדתית", "color": "#f28a17"},
     "otzma": {"name": "עוצמה יהודית", "color": "#ffd000"},
-    "haredi": {"name": "ש״ס ויהדות התורה", "color": "#6b6b6b"}
+    "haredi": {"name": "ש״ס ויהדות התורה", "color": "#000000"}
   },
   "speakers": {
+    "shas": {"name": "ש״ס", "role": "", "party": "haredi"},
     "netanyahu": {"name": "בנימין נתניהו", "role": "", "party": "likud"},
     "smotrich": {"name": "בצלאל סמוטריץ׳", "role": "", "party": "religious_zionism"},
     "ben_gvir": {"name": "איתמר בן גביר", "role": "", "party": "otzma"},
@@ -38,6 +39,7 @@
     {"speaker": "feiglin", "about": "netanyahu", "text": "אין משמעות להבל פיו. אין משמעות למילה היוצאת מפיו של נתניהו. שום משמעות.", "source": "ערוץ 7 · 2023", "duration": 5},
     {"speaker": "yitzhak_yosef", "about": "netanyahu", "text": "למה אתם שומעים בקולו? מה אתם מאמינים לו? מה אתם סומכים על אחד כזה?", "source": "וידאו · 2025", "duration": 5},
     {"speaker": "ben_gvir", "about": "netanyahu", "text": "להתבייש להצטלם איתי?!", "source": "ציוץ · 2026", "duration": 3.5},
+    {"speaker": "shas", "about": "ben_gvir", "text": "איתמר בן גביר כדרכו הנלוזה מפיץ שקרים", "source": "הודעה לתקשורת · 2024", "duration": 2.5},
     {"speaker": "saar", "about": "ben_gvir", "text": "גרמת נזק ביודעין למדינה", "source": "ציוץ · 2026", "duration": 2.5},
     {"speaker": "yair_netanyahu", "about": "saar", "text": "גדעון סער אנס, וסידר עבודה לנאנסת שלו", "source": "הקלטה · 2020", "duration": 2.5}
   ],
