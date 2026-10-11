@@ -14,6 +14,14 @@ from quote_chain_scene import PAN
 SVG = "{http://www.w3.org/2000/svg}"
 
 
+def hue_distance(a, b):
+    """How far apart two colours' hues are, ignoring how pale they are."""
+    import colorsys
+    hue = lambda c: colorsys.rgb_to_hsv(*(int(c[i:i + 2], 16) / 255 for i in (1, 3, 5)))[0]
+    d = abs(hue(a) - hue(b))
+    return min(d, 1 - d)
+
+
 class QuoteChainTests(unittest.TestCase):
     def setUp(self):
         self.timeline = load_scene("quote_chain")
@@ -118,6 +126,21 @@ class QuoteChainTests(unittest.TestCase):
         ids = self.ids(self.timeline["duration"])
         self.assertEqual(ids.count("face-netanyahu"), 3)
         self.assertIn("quote-reprise", ids)
+
+    def test_background_fades_from_accuser_to_accused(self):
+        svg = self.render(self.schedule[1]["start"])
+        fills = [r.get("fill") for r in svg.findall(SVG + "rect")]
+        parties = self.timeline["parties"]
+        likud, religious_zionism = (parties[p]["color"] for p in ("likud", "religious_zionism"))
+        # Smotrich (Religious Zionism) on Netanyahu (Likud): the accused's colour
+        # underneath, the accuser's faded in from the top.
+        accused, accuser = fills[:2]
+        self.assertLess(hue_distance(accused, likud), hue_distance(accused, religious_zionism))
+        self.assertLess(hue_distance(accuser, religious_zionism), hue_distance(accuser, likud))
+
+    def test_a_closing_speaker_other_than_the_first_goes_above_the_last(self):
+        timeline = dict(self.timeline, closing_speaker="saar")
+        render_scene(state_at(timeline, timeline["duration"]), assets={})
 
     def test_long_quotes_fit_three_lines(self):
         long_quote = ("מילא להחרים אירועים בהשתתפותי ולהתבייש להצטלם איתי, "

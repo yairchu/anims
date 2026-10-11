@@ -26,9 +26,9 @@ QUOTE_SIZE, QUOTE_CHARS, QUOTE_LINES = 52, 22, 3
 # the correct side of each Hebrew line.
 RLM = "\u200f"
 TIMING = {"intro": .6, "pause": .3, "hold": .5, "scroll": .9, "outro": 2}
-# The background is a soft gradient in the current speaker's party colour,
-# this strong at the top and fading to near white at the bottom.
-TINT_TOP, TINT_BOTTOM = .3, .06
+# The background is a soft gradient from the accuser's party colour, at their
+# face, to the accused's at theirs, each mixed with white this much.
+TINT = .25
 
 
 def build_timeline(data):
@@ -168,8 +168,10 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
     closing = state.get("closing_speaker")
     faces = [q["speaker"] for q in quotes] + ([closing] if closing else [])
     reprise = closing and closing == quotes[0]["speaker"]
-    # Who each face's quote is about; the reprise repeats the first quote's target.
-    targets = [q["about"] for q in quotes] + ([quotes[0]["about"]] if reprise else [])
+    # Who each face's quote is about; the reprise repeats the first quote's target,
+    # and any other closing speaker just goes above the last one.
+    targets = [q["about"] for q in quotes] + ([quotes[0]["about"] if reprise else quotes[-1]["speaker"]]
+                                              if closing else [])
 
     def scrolled(s):
         return ease((time - s["scroll"]) / timing["scroll"]) if timing["scroll"] else float(time >= s["scroll"])
@@ -245,18 +247,23 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
     # Back where it began: the first quote returns above the face it was about.
     if reprise and (appear := scrolled(schedule[-1])) > 0:
         parts.append(quote_block("reprise", quotes[0], *quote_at(len(quotes), closing), 1, appear, scale))
-    # The colour moves on to each speaker's party along with the camera.
-    color = party_color(state, faces[0])
-    for index in range(1, len(faces)):
-        color = mix(color, party_color(state, faces[index]), moves[index - 1])
-    # Only the base colour changes per frame; the white fade over it is fixed,
-    # so the notebook preview never patches the gradient it references.
+    # Both colours move on to the next pair's parties along with the camera.
+    white = [255] * 3
+
+    def tint(names):
+        color = party_color(state, names[0])
+        for index in range(1, len(faces)):
+            color = mix(color, party_color(state, names[index]), moves[index - 1])
+        return hex_color(mix(white, color, TINT))
+
+    # Only the two fills change per frame; the fade between them is fixed, so
+    # the notebook preview never patches the gradient that the mask references.
     background = "" if transparent else (
-        '<defs><linearGradient id="party-fade" x1="0" y1="0" x2="0" y2="1">'
-        f'<stop offset="0" stop-color="white" stop-opacity="{1 - TINT_TOP:g}"/>'
-        f'<stop offset="1" stop-color="white" stop-opacity="{1 - TINT_BOTTOM:g}"/>'
-        f'</linearGradient></defs><rect width="720" height="1280" fill="{hex_color(color)}"/>'
-        '<rect width="720" height="1280" fill="url(#party-fade)"/>')
+        f'<defs><linearGradient id="accuser-fade" gradientUnits="userSpaceOnUse" x1="0" y1="{FACE_Y}" '
+        f'x2="0" y2="{FACE_Y + STEP}"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="black"/>'
+        '</linearGradient><mask id="accuser-mask"><rect width="720" height="1280" fill="url(#accuser-fade)"/>'
+        f'</mask></defs><rect width="720" height="1280" fill="{tint(targets)}"/>'
+        f'<rect width="720" height="1280" fill="{tint(faces)}" mask="url(#accuser-mask)"/>')
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 720 1280" '
             f'role="img" aria-label="Who said what about whom">{background}'
             f'<defs><clipPath id="face-clip"><circle r="{FACE_R}"/></clipPath></defs>'
