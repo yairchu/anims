@@ -30,8 +30,13 @@ class QuoteChainTests(unittest.TestCase):
         return tuple(map(float, re.search(r"translate\((\S+) (\S+)\)", transform).groups()))
 
     def breaks(self):
-        """Indices of quotes whose target isn't the previous quote's speaker."""
+        """Indices of quotes whose target isn't the previous quote's speaker.
+
+        The closing speaker counts as one more, reprising the first quote."""
         quotes = self.timeline["quotes"]
+        closing = self.timeline.get("closing_speaker")
+        if closing == quotes[0]["speaker"]:
+            quotes = quotes + [dict(quotes[0])]
         return [i for i in range(1, len(quotes)) if quotes[i]["about"] != quotes[i - 1]["speaker"]]
 
     def test_quotes_follow_their_audio_durations(self):
@@ -72,7 +77,7 @@ class QuoteChainTests(unittest.TestCase):
         self.assertIn("face-netanyahu", ids)
 
     def test_a_chain_break_pans_left_to_a_new_strip(self):
-        index = self.breaks()[-1]
+        index = [i for i in self.breaks() if i < len(self.schedule)][-1]
         before, during = self.schedule[index - 1], self.schedule[index]
         quote = self.timeline["quotes"][index]
         pan_before, rise_before = self.camera(before["end"])

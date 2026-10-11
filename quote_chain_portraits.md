@@ -1,7 +1,7 @@
 # Portrait assets for the quote chain notebook
 
-`ben_gvir.png`, `saar.png`, and `yair_netanyahu.png` are still missing; the
-scene shows a silhouette until each file exists. Generate each in its own call
+`feiglin.png` and `yitzhak_yosef.png` are still missing; the scene shows a
+silhouette until each file exists. Generate each in its own call
 with an image-generation tool, attaching `netanyahu.png` as the first (style)
 reference and the likeness reference as the second, then the common prompt
 followed by the subject prompt. Keep the generated alpha. The scene applies a
@@ -13,6 +13,7 @@ Likeness references are frames from the downloaded source videos, extracted to
 - `ben_gvir_ref.png`: 6:02 of the Channel 14 "הפטריוטים" interview `[PAuHvMDXYLc]`.
 - `saar_ref.png`: 0:09 of the Sa'ar clip `[-bFkn2tKHUg]`.
 - Yair Netanyahu: no local video; supply a reference photo.
+- Feiglin and Rabbi Yitzhak Yosef: no local video; supply a reference photo.
 
 ## Common prompt
 
@@ -29,3 +30,11 @@ Subject: Gideon Sa'ar, short salt-and-pepper hair, dark rectangular-framed glass
 ## Yair Netanyahu — `yair_netanyahu.png`
 
 Subject: Yair Netanyahu, short dark hair, clean shaven, dark suit with white open-collared shirt, no tie.
+
+## Feiglin — `feiglin.png`
+
+Subject: Moshe Feiglin, small knitted kippah, dark suit with white open-collared shirt, no tie.
+
+## Rabbi Yitzhak Yosef — `yitzhak_yosef.png`
+
+Subject: Rabbi Yitzhak Yosef, white beard, black rabbinical hat, glasses, black rabbinical robe over white shirt.
