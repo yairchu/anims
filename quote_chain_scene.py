@@ -168,13 +168,17 @@ def party_color(state, name):
     return rgb(state.get("parties", {}).get(party, {}).get("color", "#ffffff") if party else "#ffffff")
 
 
-def strip_backgrounds(state, layout, shown):
+def strip_backgrounds(state, layout, shown, camera_x):
     """One background per strip, a vertical gradient through its faces' party colours.
 
     The gradients depend only on the layout, never on time, so the notebook
     preview never patches the definitions the frame references. Only the shown
     strips are drawn: a strip's edge fades over the previous strip, which would
-    otherwise show while the camera is still there."""
+    otherwise show while the camera is still there.
+
+    A pan to a new strip slides the backgrounds along the tilt of their bands
+    rather than straight sideways, so the bands hold still on screen while the
+    new strip's edge sweeps in; once the pan is done they line up with the faces."""
     white = [255] * 3
     tilt = math.radians(state.get("background_tilt", TILT))
     parts = []
@@ -201,7 +205,8 @@ def strip_backgrounds(state, layout, shown):
                          f'width="{PAN + BLEND}" height="{bottom - top + 2560}" fill="url(#strip-{column}-edge)"/></mask>')
             mask = f' mask="url(#strip-{column}-mask)"'
         if column in shown:
-            parts.append(f'<rect x="{left:g}" y="{top - 1280}" width="{PAN + (BLEND if column else 0)}" '
+            slide = math.tan(tilt) * (camera_x - column * PAN)
+            parts.append(f'<rect transform="translate(0 {slide:g})" x="{left:g}" y="{top - 1280}" width="{PAN + (BLEND if column else 0)}" '
                          f'height="{bottom - top + 2560}" fill="url(#strip-{column})"{mask}/>')
     definitions = "".join(part for part in parts if not part.startswith("<rect"))
     return f'<defs>{definitions}</defs>' + "".join(part for part in parts if part.startswith("<rect"))
@@ -298,7 +303,7 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
         parts.append(quote_block("reprise", quotes[0], *quote_at(len(quotes), closing), 1, appear, scale))
     # A strip's background shows from when the camera starts panning to it.
     shown = {0} | {columns[k] for k in range(1, len(faces)) if breaks[k] and moves[k - 1] > 0}
-    background = "" if transparent else strip_backgrounds(state, layout, shown)
+    background = "" if transparent else strip_backgrounds(state, layout, shown, camera_x)
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 720 1280" '
             f'role="img" aria-label="Who said what about whom">'
             f'<defs><clipPath id="face-clip"><circle r="{FACE_R}"/></clipPath></defs>'
