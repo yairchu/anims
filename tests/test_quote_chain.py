@@ -85,6 +85,30 @@ class QuoteChainTests(unittest.TestCase):
         self.assertIn(360, target_x)
         self.assertIn(360, speaker_x)
 
+    def test_a_person_shared_across_a_break_holds_still(self):
+        from quote_chain_scene import build_timeline
+        keys = ("scene", "fps", "width", "height", "speakers")
+        quote = dict(text="ציטוט", source="test", duration=2)
+        timeline = build_timeline({key: self.timeline[key] for key in keys} | {"quotes": [
+            dict(quote, speaker="netanyahu", about="ben_gvir"),
+            dict(quote, speaker="netanyahu", about="saar"),  # Same speaker
+            dict(quote, speaker="smotrich", about="saar"),  # Same target
+        ]})
+
+        def on_screen(time, name):
+            svg = ET.fromstring(render_scene(state_at(timeline, time), assets={}))
+            pan = float(re.search(r"translate\((\S+) ", next(
+                g for g in svg.iter(SVG + "g") if g.get("font-family")).get("transform")).group(1))
+            return [round(float(re.search(r"translate\((\S+) ", g.get("transform")).group(1)) + pan, 6)
+                    for g in svg.iter(SVG + "g") if g.get("id") == f"face-{name}"]
+
+        for index, (shared, panned) in enumerate((("netanyahu", "ben_gvir"), ("saar", "netanyahu"))):
+            s = timeline["schedule"][index]
+            for time in (s["scroll"], (s["scroll"] + s["scroll_end"]) / 2, s["scroll_end"]):
+                with self.subTest(shared=shared, time=time):
+                    self.assertEqual(on_screen(time, shared), [360])
+            self.assertNotIn(360, on_screen((s["scroll"] + s["scroll_end"]) / 2, panned))
+
     def test_chain_closes_on_the_first_speaker_and_quote(self):
         ids = self.ids(self.timeline["duration"])
         self.assertEqual(ids.count("face-netanyahu"), 3)

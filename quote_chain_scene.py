@@ -3,7 +3,8 @@
 The camera scrolls up a vertical strip of portraits, so each quote sits between
 its speaker and its target. When a quote's target isn't the previous speaker,
 the chain breaks: the camera pans left instead, to a new strip that starts with
-that target below its speaker. Each quote's
+that target below its speaker. A speaker or target shared across the break
+stays in place during the pan. Each quote's
 duration is the length of its audio clip, so the text reveal lines up with the
 recordings placed under the animation in the video editor.
 """
@@ -166,23 +167,43 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
     moves = [scrolled(s) for s in schedule[:len(faces) - 1]]
     camera_x = PAN * sum(m for m, b in zip(moves, breaks[1:]) if b)
     camera_y = STEP * sum(m for m, b in zip(moves, breaks[1:]) if not b)
+    faces_drawn = []
+
+    def add_face(name, column, row, appear, speaking=0):
+        x, y = position(column, row)
+        faces_drawn.append(dict(name=name, x=x, y=y, appear=appear, speaking=speaking))
+        return faces_drawn[-1]
+
     # The chain opens with the first quote's target below its speaker.
-    first_x, first_y = position(0, -1)
-    parts = [face(targets[0], speakers[targets[0]], first_y, ramp(0, timing["intro"]), 0, time, assets, first_x)]
+    intro = ramp(0, timing["intro"])
+    below = [add_face(targets[0], 0, -1, intro)]
+    above = []
     for index, name in enumerate(faces):
-        x, y = position(columns[index], rows[index])
-        # Each new speaker fades in as the camera moves to them.
-        appear = ramp(0, timing["intro"]) if index == 0 else moves[index - 1]
+        if index and breaks[index]:
+            # The new strip's target is already there once the pan starts, sliding in with it.
+            below.append(add_face(targets[index], columns[index], rows[index] - 1, float(moves[index - 1] > 0)))
+        elif index:
+            below.append(above[-1])
         speaking = 0
         if index < len(quotes):
             s = schedule[index]
             speaking = min(ease((time - s["start"] + .2) / .2), ease((s["end"] + .2 - time) / .2))
+        # Each new speaker fades in as the camera moves to them.
+        above.append(add_face(name, columns[index], rows[index], intro if index == 0 else moves[index - 1], speaking))
+    # Whoever a chain break shares with the previous quote, its speaker or its
+    # target, holds still on screen while the rest pans, then hands over to
+    # their copy in the new strip, so a series by or about one person reads as such.
+    for index in range(1, len(faces)):
         if breaks[index]:
-            # The new strip's target is already there once the pan starts, sliding in with it.
-            target_x, target_y = position(columns[index], rows[index] - 1)
-            parts.append(face(targets[index], speakers[targets[index]], target_y, float(moves[index - 1] > 0),
-                              0, time, assets, target_x))
-        parts.append(face(name, speakers[name], y, appear, speaking, time, assets, x))
+            move = moves[index - 1]
+            for side in (above, below):
+                old, new = side[index - 1], side[index]
+                if old["name"] == new["name"]:
+                    old["x"] -= PAN * move
+                    old["appear"] *= move < 1
+                    new["appear"] = float(move >= 1)
+    parts = [face(f["name"], speakers[f["name"]], f["y"], f["appear"], f["speaking"], time, assets, f["x"])
+             for f in faces_drawn]
     def quote_at(index, speaker):
         """Below the face at this index, by how much room its name and role take."""
         x, y = position(columns[index], rows[index])
