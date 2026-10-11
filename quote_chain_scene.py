@@ -26,9 +26,11 @@ QUOTE_SIZE, QUOTE_CHARS, QUOTE_LINES = 52, 22, 3
 # the correct side of each Hebrew line.
 RLM = "\u200f"
 TIMING = {"intro": .6, "pause": .3, "hold": .5, "scroll": .9, "outro": 2}
-# The background is a soft gradient from the accuser's party colour, at their
-# face, to the accused's at theirs, each mixed with white this much.
-TINT = .25
+# The background is a soft gradient through each face's party colour, mixed
+# with white this much, laid out with the faces so it moves with the camera.
+# Each strip's background fades into the previous one over BLEND, just
+# outside the frame once the pan is done.
+TINT, BLEND = .25, 240
 
 
 def build_timeline(data):
@@ -162,6 +164,40 @@ def party_color(state, name):
     return rgb(state.get("parties", {}).get(party, {}).get("color", "#ffffff") if party else "#ffffff")
 
 
+def strip_backgrounds(state, layout, shown):
+    """One background per strip, a vertical gradient through its faces' party colours.
+
+    The gradients depend only on the layout, never on time, so the notebook
+    preview never patches the definitions the frame references. Only the shown
+    strips are drawn: a strip's edge fades over the previous strip, which would
+    otherwise show while the camera is still there."""
+    white = [255] * 3
+    parts = []
+    for column in range(max(c for c, _, _ in layout) + 1):
+        stops = sorted((FACE_Y - row * STEP, name) for c, row, name in layout if c == column)
+        top, bottom = stops[0][0], stops[-1][0]
+        left = 360 - column * PAN - PAN / 2
+        gradient = "".join(
+            f'<stop offset="{(y - top) / ((bottom - top) or 1):g}" '
+            f'stop-color="{hex_color(mix(white, party_color(state, name), TINT))}"/>' for y, name in stops)
+        parts.append(f'<linearGradient id="strip-{column}" gradientUnits="userSpaceOnUse" '
+                     f'x1="0" y1="{top}" x2="0" y2="{bottom}">{gradient}</linearGradient>')
+        # Strips go leftward, so each one fades out to the right, over the previous strip.
+        mask = ""
+        if column:
+            parts.append(f'<linearGradient id="strip-{column}-edge" gradientUnits="userSpaceOnUse" '
+                         f'x1="{left + PAN:g}" y1="0" x2="{left + PAN + BLEND:g}" y2="0">'
+                         '<stop offset="0" stop-color="white"/><stop offset="1" stop-color="black"/></linearGradient>'
+                         f'<mask id="strip-{column}-mask"><rect x="{left:g}" y="{top - 1280}" '
+                         f'width="{PAN + BLEND}" height="{bottom - top + 2560}" fill="url(#strip-{column}-edge)"/></mask>')
+            mask = f' mask="url(#strip-{column}-mask)"'
+        if column in shown:
+            parts.append(f'<rect x="{left:g}" y="{top - 1280}" width="{PAN + (BLEND if column else 0)}" '
+                         f'height="{bottom - top + 2560}" fill="url(#strip-{column})"{mask}/>')
+    definitions = "".join(part for part in parts if not part.startswith("<rect"))
+    return f'<defs>{definitions}</defs>' + "".join(part for part in parts if part.startswith("<rect"))
+
+
 def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=False):
     time, timing, schedule = state["time"], state["timing"], state["schedule"]
     speakers, quotes = state["speakers"], state["quotes"]
@@ -187,6 +223,10 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
     for k in range(1, len(faces)):
         columns.append(columns[-1] + breaks[k])
         rows.append(rows[-1] + (not breaks[k]))
+
+    # Every face's place, for the backgrounds, which follow the faces.
+    layout = [(0, -1, targets[0])] + [(columns[k], rows[k], name) for k, name in enumerate(faces)] + [
+        (columns[k], rows[k] - 1, targets[k]) for k in range(1, len(faces)) if breaks[k]]
 
     def position(column, row):
         return 360 - column * PAN, FACE_Y - row * STEP
@@ -247,24 +287,11 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
     # Back where it began: the first quote returns above the face it was about.
     if reprise and (appear := scrolled(schedule[-1])) > 0:
         parts.append(quote_block("reprise", quotes[0], *quote_at(len(quotes), closing), 1, appear, scale))
-    # Both colours move on to the next pair's parties along with the camera.
-    white = [255] * 3
-
-    def tint(names):
-        color = party_color(state, names[0])
-        for index in range(1, len(faces)):
-            color = mix(color, party_color(state, names[index]), moves[index - 1])
-        return hex_color(mix(white, color, TINT))
-
-    # Only the two fills change per frame; the fade between them is fixed, so
-    # the notebook preview never patches the gradient that the mask references.
-    background = "" if transparent else (
-        f'<defs><linearGradient id="accuser-fade" gradientUnits="userSpaceOnUse" x1="0" y1="{FACE_Y}" '
-        f'x2="0" y2="{FACE_Y + STEP}"><stop offset="0" stop-color="white"/><stop offset="1" stop-color="black"/>'
-        '</linearGradient><mask id="accuser-mask"><rect width="720" height="1280" fill="url(#accuser-fade)"/>'
-        f'</mask></defs><rect width="720" height="1280" fill="{tint(targets)}"/>'
-        f'<rect width="720" height="1280" fill="{tint(faces)}" mask="url(#accuser-mask)"/>')
+    # A strip's background shows from when the camera starts panning to it.
+    shown = {0} | {columns[k] for k in range(1, len(faces)) if breaks[k] and moves[k - 1] > 0}
+    background = "" if transparent else strip_backgrounds(state, layout, shown)
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 720 1280" '
-            f'role="img" aria-label="Who said what about whom">{background}'
+            f'role="img" aria-label="Who said what about whom">'
             f'<defs><clipPath id="face-clip"><circle r="{FACE_R}"/></clipPath></defs>'
-            f'<g font-family="Arial, sans-serif" transform="translate({camera_x:g} {camera_y:g})">{"".join(parts)}</g></svg>')
+            f'<g font-family="Arial, sans-serif" transform="translate({camera_x:g} {camera_y:g})">'
+            f'{background}{"".join(parts)}</g></svg>')

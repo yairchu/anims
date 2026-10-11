@@ -127,16 +127,20 @@ class QuoteChainTests(unittest.TestCase):
         self.assertEqual(ids.count("face-netanyahu"), 3)
         self.assertIn("quote-reprise", ids)
 
-    def test_background_fades_from_accuser_to_accused(self):
+    def test_background_runs_through_each_face_party_colour(self):
         svg = self.render(self.schedule[1]["start"])
-        fills = [r.get("fill") for r in svg.findall(SVG + "rect")]
-        parties = self.timeline["parties"]
-        likud, religious_zionism = (parties[p]["color"] for p in ("likud", "religious_zionism"))
-        # Smotrich (Religious Zionism) on Netanyahu (Likud): the accused's colour
-        # underneath, the accuser's faded in from the top.
-        accused, accuser = fills[:2]
-        self.assertLess(hue_distance(accused, likud), hue_distance(accused, religious_zionism))
-        self.assertLess(hue_distance(accuser, religious_zionism), hue_distance(accuser, likud))
+        strip = next(g for g in svg.iter(SVG + "linearGradient") if g.get("id") == "strip-0")
+        # From the bottom up: Ben Gvir, Netanyahu, Smotrich, Miri Regev.
+        colours = [stop.get("stop-color") for stop in strip.findall(SVG + "stop")][::-1][:4]
+        parties = {name: party["color"] for name, party in self.timeline["parties"].items()}
+        for colour, party in zip(colours, ("otzma", "likud", "religious_zionism", "likud")):
+            with self.subTest(party=party):
+                self.assertEqual(min(parties, key=lambda p: hue_distance(colour, parties[p])), party)
+
+    def test_background_scrolls_with_the_faces(self):
+        svg = self.render(self.schedule[1]["start"])
+        camera = next(g for g in svg.iter(SVG + "g") if g.get("font-family"))
+        self.assertTrue(any(r.get("fill") == "url(#strip-0)" for r in camera.iter(SVG + "rect")))
 
     def test_a_closing_speaker_other_than_the_first_goes_above_the_last(self):
         timeline = dict(self.timeline, closing_speaker="saar")
