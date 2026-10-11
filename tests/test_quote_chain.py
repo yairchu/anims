@@ -92,7 +92,7 @@ class QuoteChainTests(unittest.TestCase):
 
     def test_a_person_shared_across_a_break_holds_still(self):
         from quote_chain_scene import build_timeline
-        keys = ("scene", "fps", "width", "height", "speakers")
+        keys = ("scene", "fps", "width", "height", "speakers", "parties")
         quote = dict(text="ציטוט", source="test", duration=2)
         timeline = build_timeline({key: self.timeline[key] for key in keys} | {"quotes": [
             dict(quote, speaker="netanyahu", about="ben_gvir"),

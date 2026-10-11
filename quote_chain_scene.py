@@ -26,6 +26,9 @@ QUOTE_SIZE, QUOTE_CHARS, QUOTE_LINES = 52, 22, 3
 # the correct side of each Hebrew line.
 RLM = "\u200f"
 TIMING = {"intro": .6, "pause": .3, "hold": .5, "scroll": .9, "outro": 2}
+# The background is a soft gradient in the current speaker's party colour,
+# this strong at the top and fading to near white at the bottom.
+TINT_TOP, TINT_BOTTOM = .3, .06
 
 
 def build_timeline(data):
@@ -40,6 +43,10 @@ def build_timeline(data):
     for name in [q[key] for q in quotes for key in ("speaker", "about")] + ([closing] if closing else []):
         if name not in speakers:
             raise ValueError(f"Unknown speaker: {name}")
+    parties = data.get("parties", {})
+    for name, speaker in speakers.items():
+        if speaker.get("party") and speaker["party"] not in parties:
+            raise ValueError(f"{name}: unknown party {speaker['party']}")
     schedule, chapters, cursor = [], [], timing["intro"]
     for index, quote in enumerate(quotes):
         duration = quote["duration"]
@@ -63,7 +70,7 @@ def build_timeline(data):
 
 
 def chain_state(timeline, time):
-    keys = ("speakers", "quotes", "closing_speaker", "schedule", "timing")
+    keys = ("speakers", "parties", "quotes", "closing_speaker", "schedule", "timing")
     return {key: timeline.get(key) for key in keys} | {
         "scene": "quote_chain", "time": time,
         "quote_text_scale": timeline.get("quote_text_scale", 1),
@@ -135,6 +142,24 @@ def quote_block(block_id, quote, x, y, reveal, tag, scale, opacity=1):
     source_y = y + 32 + (len(lines) - 1) * size * 1.3 + 54
     parts.append(text(x, source_y, quote["source"], 25, MUTED, opacity=f"{tag:g}"))
     return f'<g id="quote-{block_id}" opacity="{opacity:g}">{"".join(parts)}</g>'
+
+
+def rgb(color):
+    return [int(color[i:i + 2], 16) for i in (1, 3, 5)]
+
+
+def mix(a, b, amount):
+    return [x + (y - x) * amount for x, y in zip(a, b)]
+
+
+def hex_color(channels):
+    return "#" + "".join(f"{round(c):02x}" for c in channels)
+
+
+def party_color(state, name):
+    """A speaker's party colour, or white for speakers without a party."""
+    party = state["speakers"][name].get("party")
+    return rgb(state.get("parties", {}).get(party, {}).get("color", "#ffffff") if party else "#ffffff")
 
 
 def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=False):
@@ -220,7 +245,18 @@ def render_quote_chain(state, *, assets, width=1080, height=1920, transparent=Fa
     # Back where it began: the first quote returns above the face it was about.
     if reprise and (appear := scrolled(schedule[-1])) > 0:
         parts.append(quote_block("reprise", quotes[0], *quote_at(len(quotes), closing), 1, appear, scale))
-    background = "" if transparent else '<rect width="720" height="1280" fill="white"/>'
+    # The colour moves on to each speaker's party along with the camera.
+    color = party_color(state, faces[0])
+    for index in range(1, len(faces)):
+        color = mix(color, party_color(state, faces[index]), moves[index - 1])
+    # Only the base colour changes per frame; the white fade over it is fixed,
+    # so the notebook preview never patches the gradient it references.
+    background = "" if transparent else (
+        '<defs><linearGradient id="party-fade" x1="0" y1="0" x2="0" y2="1">'
+        f'<stop offset="0" stop-color="white" stop-opacity="{1 - TINT_TOP:g}"/>'
+        f'<stop offset="1" stop-color="white" stop-opacity="{1 - TINT_BOTTOM:g}"/>'
+        f'</linearGradient></defs><rect width="720" height="1280" fill="{hex_color(color)}"/>'
+        '<rect width="720" height="1280" fill="url(#party-fade)"/>')
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 720 1280" '
             f'role="img" aria-label="Who said what about whom">{background}'
             f'<defs><clipPath id="face-clip"><circle r="{FACE_R}"/></clipPath></defs>'

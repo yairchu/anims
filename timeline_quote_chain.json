@@ -11,16 +11,22 @@
     "scroll": 0.9,
     "outro": 2
   },
+  "parties": {
+    "likud": {"name": "הליכוד", "color": "#1f5fd1"},
+    "religious_zionism": {"name": "הציונות הדתית", "color": "#f28a17"},
+    "otzma": {"name": "עוצמה יהודית", "color": "#ffd000"},
+    "haredi": {"name": "ש״ס ויהדות התורה", "color": "#6b6b6b"}
+  },
   "speakers": {
-    "netanyahu": {"name": "בנימין נתניהו", "role": ""},
-    "smotrich": {"name": "בצלאל סמוטריץ׳", "role": ""},
-    "ben_gvir": {"name": "איתמר בן גביר", "role": ""},
-    "saar": {"name": "גדעון סער", "role": ""},
-    "yair_netanyahu": {"name": "יאיר נתניהו", "role": "בנו של ראש הממשלה"},
-    "miri_regev": {"name": "מירי רגב", "role": ""},
-    "natan_eshel": {"name": "נתן אשל", "role": "מקורבו של נתיהו"},
-    "feiglin": {"name": "משה פייגלין", "role": "מס׳ 2 בציונות הדתית"},
-    "yitzhak_yosef": {"name": "הרב יצחק יוסף", "role": "הראשון לציון לשעבר"}
+    "netanyahu": {"name": "בנימין נתניהו", "role": "", "party": "likud"},
+    "smotrich": {"name": "בצלאל סמוטריץ׳", "role": "", "party": "religious_zionism"},
+    "ben_gvir": {"name": "איתמר בן גביר", "role": "", "party": "otzma"},
+    "saar": {"name": "גדעון סער", "role": "", "party": "likud"},
+    "yair_netanyahu": {"name": "יאיר נתניהו", "role": "בנו של ראש הממשלה", "party": "likud"},
+    "miri_regev": {"name": "מירי רגב", "role": "", "party": "likud"},
+    "natan_eshel": {"name": "נתן אשל", "role": "מקורבו של נתיהו", "party": "likud"},
+    "feiglin": {"name": "משה פייגלין", "role": "מס׳ 2 בציונות הדתית", "party": "religious_zionism"},
+    "yitzhak_yosef": {"name": "הרב יצחק יוסף", "role": "הראשון לציון לשעבר", "party": "haredi"}
   },
   "quotes": [
     {"speaker": "netanyahu", "about": "ben_gvir", "text": "איתמר בן גביר לא יהיה שר בממשלתי", "source": "וידאו · N12 · 2021", "duration": 3},
