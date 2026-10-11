@@ -116,25 +116,35 @@ def _(args, mo, timeline):
         help_text="Scale of the quote text; long quotes still shrink to fit three lines",
         show_value=True,
     )
+    background_tilt = args.slider(
+        start=-45,
+        stop=45,
+        step=1,
+        value=timeline.get("background_tilt", 15),
+        option="--background-tilt",
+        label="Background tilt",
+        help_text="Degrees the background's colour bands rise toward the left; negative rises to the right",
+        show_value=True,
+    )
     output = args.text(
         option="--output",
         label="Output video",
         help_text="Output path (default: output/quote-chain.mp4)",
     )
-    mo.hstack([quote_text_scale, output], wrap=True)
-    return output, quote_text_scale
+    mo.hstack([quote_text_scale, background_tilt, output], wrap=True)
+    return background_tilt, output, quote_text_scale
 
 
 @app.cell
-def _(args, output, quote_text_scale):
-    interface = args.interface(quote_text_scale, output)
+def _(args, background_tilt, output, quote_text_scale):
+    interface = args.interface(quote_text_scale, background_tilt, output)
     interface
     return (interface,)
 
 
 @app.cell
-def _(quote_text_scale):
-    live_overrides = {"quote_text_scale": quote_text_scale.value}
+def _(background_tilt, quote_text_scale):
+    live_overrides = {"quote_text_scale": quote_text_scale.value, "background_tilt": background_tilt.value}
     return (live_overrides,)
 
 

@@ -31,7 +31,8 @@ TIMING = {"intro": .6, "pause": .3, "hold": .5, "scroll": .9, "outro": 2}
 # Each strip's background fades into the previous one over BLEND, just
 # outside the frame once the pan is done.
 TINT, BLEND = .25, 240
-# The colour bands rise this many degrees toward the left, the way the chain moves.
+# By default the colour bands rise this many degrees toward the left, the way
+# the chain moves; the timeline's background_tilt overrides it.
 TILT = 15
 
 
@@ -78,6 +79,7 @@ def chain_state(timeline, time):
     return {key: timeline.get(key) for key in keys} | {
         "scene": "quote_chain", "time": time,
         "quote_text_scale": timeline.get("quote_text_scale", 1),
+        "background_tilt": timeline.get("background_tilt", TILT),
     }
 
 
@@ -174,6 +176,7 @@ def strip_backgrounds(state, layout, shown):
     strips are drawn: a strip's edge fades over the previous strip, which would
     otherwise show while the camera is still there."""
     white = [255] * 3
+    tilt = math.radians(state.get("background_tilt", TILT))
     parts = []
     for column in range(max(c for c, _, _ in layout) + 1):
         stops = sorted((FACE_Y - row * STEP, name) for c, row, name in layout if c == column)
@@ -184,10 +187,10 @@ def strip_backgrounds(state, layout, shown):
             f'stop-color="{hex_color(mix(white, party_color(state, name), TINT))}"/>' for y, name in stops)
         # Tilted down and to the left, and shortened to match, the gradient still
         # puts each face's colour exactly at its face, in the middle of the strip.
-        center, length = left + PAN / 2, (bottom - top) * math.cos(math.radians(TILT))
+        center, length = left + PAN / 2, (bottom - top) * math.cos(tilt)
         parts.append(f'<linearGradient id="strip-{column}" gradientUnits="userSpaceOnUse" '
-                     f'x1="{center:g}" y1="{top}" x2="{center - length * math.sin(math.radians(TILT)):g}" '
-                     f'y2="{top + length * math.cos(math.radians(TILT)):g}">{gradient}</linearGradient>')
+                     f'x1="{center:g}" y1="{top}" x2="{center - length * math.sin(tilt):g}" '
+                     f'y2="{top + length * math.cos(tilt):g}">{gradient}</linearGradient>')
         # Strips go leftward, so each one fades out to the right, over the previous strip.
         mask = ""
         if column:

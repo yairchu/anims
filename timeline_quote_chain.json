@@ -4,6 +4,7 @@
   "width": 1080,
   "height": 1920,
   "quote_text_scale": 1,
+  "background_tilt": 15,
   "timing": {
     "intro": 0.6,
     "pause": 0.3,
