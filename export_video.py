@@ -47,7 +47,7 @@ def parse_options(argv=None):
         output=group.text(
             value="output/political-spectrum.mp4",
             option="--output",
-            help_text="Output video path",
+            help_text="Output video path; .mov exports ProRes for editing",
         ),
         transparent=group.checkbox(
             flag="--transparent",
@@ -113,10 +113,14 @@ def parse_options(argv=None):
 
 def encode_video(draw_svg, *, output, fps, start, end, transparent=False,
                  overwrite=False, stills=None, chapters=()):
-    """Rasterize draw_svg(time) for each frame and encode an MP4 or alpha MOV."""
-    suffix = ".mov" if transparent else ".mp4"
-    if output.suffix.lower() != suffix:
-        raise ValueError(f"This export mode requires a {suffix} output")
+    """Rasterize draw_svg(time) for each frame and encode an MP4 or a MOV.
+
+    A MOV is ProRes, 4444 with alpha when transparent, otherwise 422 HQ, whose
+    10-bit 4:2:2 keeps soft gradients from banding when edited further."""
+    suffix = output.suffix.lower()
+    if suffix not in ((".mov",) if transparent else (".mp4", ".mov")):
+        raise ValueError("Use a .mp4 or .mov output" if not transparent
+                         else "Transparent exports require a .mov output")
     if output.exists() and not overwrite:
         raise ValueError("Output already exists; use --overwrite to replace it")
     if not shutil.which("ffmpeg"):
@@ -155,7 +159,9 @@ def encode_video(draw_svg, *, output, fps, start, end, transparent=False,
             "pipe:0",
             "-an",
         ]
-        if transparent:
+        if suffix == ".mov" and not transparent:
+            command += ["-c:v", "prores_ks", "-profile:v", "3", "-pix_fmt", "yuv422p10le"]
+        elif transparent:
             command += [
                 "-c:v",
                 "prores_ks",

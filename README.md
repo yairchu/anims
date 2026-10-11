@@ -56,6 +56,7 @@ leaving the bottom clear for captions.
 
 ```sh
 uv run python export_video.py --scene quote_chain --output output/quote-chain.mp4
+uv run python export_video.py --scene quote_chain --output output/quote-chain.mov  # ProRes, for Final Cut
 uv run python animation_preview.py --scene quote_chain
 ```
 
@@ -219,7 +220,7 @@ A short, lower-resolution render for checking changes:
 uv run python export_video.py --start 13 --end 18 --width 960 --height 540 --fps 15 --output output/preview.mp4
 ```
 
-Add `--stills output/stills` for chapter screenshots, or `--overwrite` to replace a previous export. MP4 cannot carry alpha; transparent exports require `.mov`. Generated videos are ignored by Git. A `.json` sidecar records the exact timeline and export settings used for each video. Completed videos replace the destination only after encoding succeeds.
+Add `--stills output/stills` for chapter screenshots, or `--overwrite` to replace a previous export. MP4 cannot carry alpha; transparent exports require `.mov`. A `.mov` output without `--transparent` is ProRes 422 HQ, which keeps soft gradients from banding when the video is edited further, as in Final Cut. Generated videos are ignored by Git. A `.json` sidecar records the exact timeline and export settings used for each video. Completed videos replace the destination only after encoding succeeds.
 
 The alpha export removes the scene background, but deliberately preserves backgrounds inside the individual image assets (such as the portrait's cream circle). No narration, soundtrack, or captions are baked in.
 

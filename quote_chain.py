@@ -129,7 +129,7 @@ def _(args, mo, timeline):
     output = args.text(
         option="--output",
         label="Output video",
-        help_text="Output path (default: output/quote-chain.mp4)",
+        help_text="Output path (default: output/quote-chain.mp4); a .mov exports ProRes 422 HQ for editing",
     )
     mo.hstack([quote_text_scale, background_tilt, output], wrap=True)
     return background_tilt, output, quote_text_scale
