@@ -31,6 +31,8 @@ TIMING = {"intro": .6, "pause": .3, "hold": .5, "scroll": .9, "outro": 2}
 # Each strip's background fades into the previous one over BLEND, just
 # outside the frame once the pan is done.
 TINT, BLEND = .25, 240
+# The colour bands rise this many degrees toward the left, the way the chain moves.
+TILT = 15
 
 
 def build_timeline(data):
@@ -180,8 +182,12 @@ def strip_backgrounds(state, layout, shown):
         gradient = "".join(
             f'<stop offset="{(y - top) / ((bottom - top) or 1):g}" '
             f'stop-color="{hex_color(mix(white, party_color(state, name), TINT))}"/>' for y, name in stops)
+        # Tilted down and to the left, and shortened to match, the gradient still
+        # puts each face's colour exactly at its face, in the middle of the strip.
+        center, length = left + PAN / 2, (bottom - top) * math.cos(math.radians(TILT))
         parts.append(f'<linearGradient id="strip-{column}" gradientUnits="userSpaceOnUse" '
-                     f'x1="0" y1="{top}" x2="0" y2="{bottom}">{gradient}</linearGradient>')
+                     f'x1="{center:g}" y1="{top}" x2="{center - length * math.sin(math.radians(TILT)):g}" '
+                     f'y2="{top + length * math.cos(math.radians(TILT)):g}">{gradient}</linearGradient>')
         # Strips go leftward, so each one fades out to the right, over the previous strip.
         mask = ""
         if column:
