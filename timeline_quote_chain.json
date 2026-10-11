@@ -26,7 +26,7 @@
     "saar": {"name": "גדעון סער", "role": "", "party": "likud"},
     "yair_netanyahu": {"name": "יאיר נתניהו", "role": "בנו של ראש הממשלה", "party": "likud"},
     "miri_regev": {"name": "מירי רגב", "role": "", "party": "likud"},
-    "natan_eshel": {"name": "נתן אשל", "role": "מקורבו של נתיהו", "party": "likud"},
+    "natan_eshel": {"name": "נתן אשל", "role": "מקורבו של נתניהו", "party": "likud"},
     "feiglin": {"name": "משה פייגלין", "role": "מס׳ 2 בציונות הדתית", "party": "religious_zionism"},
     "yitzhak_yosef": {"name": "הרב יצחק יוסף", "role": "הראשון לציון לשעבר", "party": "haredi"}
   },
