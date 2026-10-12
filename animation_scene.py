@@ -333,6 +333,11 @@ def render_scene(state, *, assets=None, width=1080, height=1920, transparent=Fal
 
         return render_quote_chain(state, assets=embedded_assets() if assets is None else assets,
                                   width=width, height=height, transparent=transparent)
+    if state.get("scene") == "trust_loop":
+        from trust_loop_scene import render_trust_loop
+
+        return render_trust_loop(state, assets=embedded_assets() if assets is None else assets,
+                                 width=width, height=height, transparent=transparent)
     if state.get("scene") == "tunnels":
         from tunnels_scene import render_tunnels
 

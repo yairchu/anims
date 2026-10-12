@@ -60,6 +60,22 @@ uv run python export_video.py --scene quote_chain --output output/quote-chain.mo
 uv run python animation_preview.py --scene quote_chain
 ```
 
+## Trust loop · he vouches for them, they call him a liar
+
+`uv run marimo edit trust_loop.py` opens a portrait follow-up to the quote
+chain. Netanyahu's partners appear below him in a group captioned as the people
+he proposes should lead us. A blue arrow down says "trust them", and a red
+arrow back up says "he's a liar". The partners' quotes were just shown in the
+quote chain, so they aren't repeated. A pulse laps the loop, speeding up. The
+diagram then shrinks to the top, and the two ways out ("believe him", "believe
+them") end at one verdict. Labels, partners, and beat lengths live in
+`timeline_trust_loop.json`, which reloads automatically.
+
+```sh
+uv run python trust_loop.py --output output/trust-loop.mov    # ProRes, for Final Cut
+uv run python export_video.py --scene trust_loop --output output/trust-loop.mp4
+```
+
 ## Tunnels · 2014 → 2026
 
 The second video has its own notebook and artwork, sharing the timeline engine,

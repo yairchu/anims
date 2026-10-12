@@ -1,0 +1,41 @@
+{
+  "scene": "trust_loop",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "timing": {
+    "intro": 0.6,
+    "partners": 1.2,
+    "trust": 1,
+    "trust_hold": 0.8,
+    "liar": 1,
+    "liar_hold": 0.8,
+    "loop": 3,
+    "settle": 0.8,
+    "if_him": 1.8,
+    "if_them": 1.8,
+    "verdict": 1,
+    "outro": 2.5
+  },
+  "labels": {
+    "partners": "השותפים שהוא מציע שיובילו אותנו",
+    "trust": "סמכו עליהם",
+    "liar": "הוא שקרן",
+    "if_him": "מאמינים לו? אז גם להם, והם אומרים שהוא שקרן",
+    "if_them": "מאמינים להם? אז הוא שקרן",
+    "verdict": "כך או כך, אי אפשר להאמין לו"
+  },
+  "parties": {
+    "likud": {"name": "הליכוד", "color": "#1f5fd1"},
+    "religious_zionism": {"name": "הציונות הדתית", "color": "#f28a17"},
+    "haredi": {"name": "ש״ס ויהדות התורה", "color": "#000000"}
+  },
+  "speakers": {
+    "netanyahu": {"name": "בנימין נתניהו", "party": "likud"},
+    "smotrich": {"name": "בצלאל סמוטריץ׳", "party": "religious_zionism"},
+    "feiglin": {"name": "משה פייגלין", "party": "religious_zionism"},
+    "yitzhak_yosef": {"name": "הרב יצחק יוסף", "party": "haredi"}
+  },
+  "leader": "netanyahu",
+  "partners": ["smotrich", "feiglin", "yitzhak_yosef"]
+}
