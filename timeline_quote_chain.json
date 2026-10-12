@@ -31,17 +31,14 @@
     "yitzhak_yosef": {"name": "הרב יצחק יוסף", "role": "הראשון לציון לשעבר", "party": "haredi"}
   },
   "quotes": [
-    {"speaker": "netanyahu", "about": "ben_gvir", "text": "איתמר בן גביר לא יהיה שר בממשלתי", "source": "וידאו · N12 · 2021", "duration": 3},
-    {"speaker": "smotrich", "about": "netanyahu", "text": "שקרן בן שקרן", "source": "הקלטה · 2022", "duration": 2},
-    {"speaker": "miri_regev", "about": "smotrich", "text": "סמוטריץ׳ הוא גזען והומופוב", "source": "וידאו · 2021", "duration": 3},
-    {"speaker": "natan_eshel", "about": "miri_regev", "text": "מירי רגב עושה עבודה מצוינת. זאת אומרת, זה שהיא בהמה בכלל", "source": "הקלטה · 2020", "duration": 3},
-    {"speaker": "saar", "about": "netanyahu", "text": "אדם כזה מסוכן לעם. מסוכן שהוא ימשיך לכהן", "source": "2021", "duration": 3},
-    {"speaker": "feiglin", "about": "netanyahu", "text": "אין משמעות להבל פיו. אין משמעות למילה היוצאת מפיו של נתניהו. שום משמעות.", "source": "ערוץ 7 · 2023", "duration": 3},
-    {"speaker": "yitzhak_yosef", "about": "netanyahu", "text": "למה אתם שומעים בקולו? מה אתם מאמינים לו? מה אתם סומכים על אחד כזה?", "source": "וידאו · 2025", "duration": 3},
-    {"speaker": "ben_gvir", "about": "netanyahu", "text": "להתבייש להצטלם איתי?!", "source": "ציוץ · 2026", "duration": 3},
-    {"speaker": "shas", "about": "ben_gvir", "text": "איתמר בן גביר כדרכו הנלוזה מפיץ שקרים", "source": "הודעה לתקשורת · 2024", "duration": 3},
-    {"speaker": "saar", "about": "ben_gvir", "text": "גרמת נזק ביודעין למדינה", "source": "ציוץ · 2026", "duration": 3},
-    {"speaker": "yair_netanyahu", "about": "saar", "text": "גדעון סער אנס, וסידר עבודה לנאנסת שלו", "source": "הקלטה · 2020", "duration": 3}
+    {"speaker": "netanyahu", "about": "ben_gvir", "text": "איתמר בן גביר לא יהיה שר בממשלתי", "source": "וידאו · N12 · 2021", "duration": 2.5},
+    {"speaker": "smotrich", "about": "netanyahu", "text": "שקרן בן שקרן", "source": "הקלטה · 2022", "duration": 1.5},
+    {"speaker": "miri_regev", "about": "smotrich", "text": "סמוטריץ׳ הוא גזען והומופוב", "source": "וידאו · 2021", "duration": 2.5},
+    {"speaker": "natan_eshel", "about": "miri_regev", "text": "מירי רגב עושה עבודה מצוינת. זאת אומרת, זה שהיא בהמה בכלל", "source": "הקלטה · 2020", "duration": 2.5},
+    {"speaker": "feiglin", "about": "netanyahu", "text": "אין משמעות להבל פיו. אין משמעות למילה היוצאת מפיו של נתניהו. שום משמעות.", "source": "ערוץ 7 · 2023", "duration": 2.5},
+    {"speaker": "yitzhak_yosef", "about": "netanyahu", "text": "למה אתם שומעים בקולו? מה אתם מאמינים לו? מה אתם סומכים על אחד כזה?", "source": "וידאו · 2025", "duration": 2.5},
+    {"speaker": "saar", "about": "ben_gvir", "text": "גרמת נזק ביודעין למדינה", "source": "ציוץ · 2026", "duration": 2.5},
+    {"speaker": "yair_netanyahu", "about": "saar", "text": "גדעון סער אנס, וסידר עבודה לנאנסת שלו", "source": "הקלטה · 2020", "duration": 2.5}
   ],
   "closing_speaker": "netanyahu"
 }
