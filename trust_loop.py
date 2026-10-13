@@ -93,7 +93,7 @@ def _(get_asset_mtimes, notebook_asset_urls):
 def _(mo):
     mo.md(r"""
     ### Trust loop · he vouches for them, they call him a liar
-    Follows the quote chain, so the partners' quotes aren't repeated. An arrow
+    Follows the quote chain and adds Sa'ar to the partners shown there. An arrow
     down from Netanyahu tells us to trust his partners, an arrow back up says
     he's a liar, and a pulse chases around the loop. The diagram then shrinks
     to make room for the two ways out, which end at the same verdict. Text,
@@ -179,6 +179,7 @@ def _(interface):
 @app.cell
 def _(
     Path,
+    args,
     encode_video,
     export_button,
     mo,
@@ -200,7 +201,7 @@ def _(
         start=0,
         end=timeline["duration"],
         overwrite=True,
-        progress=lambda indices: mo.status.progress_bar(indices, title="Exporting video"),
+        progress=lambda indices: args.progress_bar(indices, title="Exporting video"),
     )
     print(f"Saved {exported.resolve()} ({frames} frames)")
     return

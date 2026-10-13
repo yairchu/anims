@@ -34,8 +34,9 @@
     "netanyahu": {"name": "בנימין נתניהו", "party": "likud"},
     "smotrich": {"name": "בצלאל סמוטריץ׳", "party": "religious_zionism"},
     "feiglin": {"name": "משה פייגלין", "party": "religious_zionism"},
-    "yitzhak_yosef": {"name": "הרב יצחק יוסף", "party": "haredi"}
+    "yitzhak_yosef": {"name": "הרב יצחק יוסף", "party": "haredi"},
+    "saar": {"name": "גדעון סער", "party": "likud"}
   },
   "leader": "netanyahu",
-  "partners": ["smotrich", "feiglin", "yitzhak_yosef"]
+  "partners": ["smotrich", "feiglin", "yitzhak_yosef", "saar"]
 }

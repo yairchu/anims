@@ -1,6 +1,7 @@
 """The trust loop: Netanyahu vouches for his partners, who say he's a liar.
 
-It follows the quote chain, so their quotes are fresh and aren't repeated:
+It follows the quote chain and adds Sa'ar, whose agreement with Smotrich's
+liar accusation was reported in his ynet interview in 2022:
 an arrow down from Netanyahu to his partners says "trust them", an arrow back
 up says "he's a liar", a pulse chases around the loop, and the diagram then
 shrinks to make room for the two ways out of it, which end in the same place.
@@ -143,6 +144,7 @@ def render_trust_loop(state, *, assets, width=1080, height=1920, transparent=Fal
     white = [255] * 3
     lx, ly, lr = LEADER
     spacing = 600 / len(partners)
+    partner_radius = min(PARTNER_R, spacing / 2 - 10)
     partner_x = [60 + spacing * (i + .5) for i in range(len(partners))]
 
     # The pulse laps the loop, speeding up, then the arrows rest lit.
@@ -177,7 +179,7 @@ def render_trust_loop(state, *, assets, width=1080, height=1920, transparent=Fal
     parts.append(face(leader, speakers[leader], lx, ly, lr, ramp("intro"), assets, flash(0), RED))
     stagger = timing["partners"] / (len(partners) + 1)
     for i, name in enumerate(partners):
-        parts.append(face(name, speakers[name], partner_x[i], PARTNER_Y, PARTNER_R,
+        parts.append(face(name, speakers[name], partner_x[i], PARTNER_Y, partner_radius,
                           ramp("partners", stagger * (i + 1), stagger * 1.5), assets, flash(.5), BLUE))
     if pulse:
         x, y = cubic(TRUST_ARC, lap * 2) if on_trust else cubic(LIAR_ARC, lap * 2 - 1)
